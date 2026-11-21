@@ -298,7 +298,7 @@
       h("div", { class: "pt-event-bar" }, [remove]),
       field(p + "-title", "What is it called?", title),
       field(p + "-cat", "What kind of event is it?", cat),
-      field(p + "-area", "Where is it?", area, { hint: "The area or venue name, for example Victoria Park, Hackney." }),
+      field(p + "-area", "Where is it?", area, { hint: "The area or venue name, for example Victoria Park, Hackney. A new location is a new event. If the place changes regularly, type TBA." }),
       field(p + "-desc", "What happens?", desc, { optional: true, hint: "A sentence or two for someone deciding whether to come." }),
       schedule,
       dateField,
@@ -383,8 +383,14 @@
   function readYou() {
     return {
       organiserName: value($("y-name")), organisationName: value($("y-org")), email: value($("y-email")),
-      phone: value($("y-phone")), city: value($("y-city")), country: value($("y-country")), website: value($("y-site"))
+      phone: value($("y-phone")), city: value($("y-city")), country: value($("y-country")), website: value($("y-site")), instagram: value($("y-ig"))
     };
+  }
+
+  // "@name", "name" or an instagram.com link all become "@name". Returns "" when it is not one.
+  function instagramHandle(text) {
+    var t = String(text || "").trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/[\/?#].*$/, "").replace(/^@/, "");
+    return /^[A-Za-z0-9._]{1,30}$/.test(t) ? "@" + t : "";
   }
 
   function checkYou() {
@@ -397,6 +403,12 @@
     if (y.phone && !/^[0-9+()\-. ]{6,40}$/.test(y.phone)) fail($("y-phone"), "Use digits, spaces and + only, for example +44 7700 900123.");
     if (!y.city) fail($("y-city"), "Enter the town or city your events are in.");
     if (!/^[A-Z]{2}$/.test(y.country)) fail($("y-country"), "Choose your country.");
+    if (y.website && !/^(https?:\/\/)?[^\s\/@]+\.[^\s\/@]{2,}(\/\S*)?$/i.test(y.website)) fail($("y-site"), "Enter a website address like yourgroup.com. Put your Instagram in the Instagram box.");
+    if (y.instagram) {
+      var ig = instagramHandle(y.instagram);
+      if (!ig) fail($("y-ig"), "Enter your Instagram name, like @yourgroup. It can use letters, numbers, full stops and underscores.");
+      else y.instagram = ig;
+    }
     if (bad) { bad.focus(); return null; }
     return y;
   }
@@ -510,7 +522,8 @@
     row(dl, "Email", y.email);
     if (y.phone) row(dl, "Phone", y.phone);
     row(dl, "Based in", y.city + ", " + countryName(y.country));
-    if (y.website) row(dl, "Website or Instagram", y.website);
+    if (y.website) row(dl, "Website", y.website);
+    if (y.instagram) row(dl, "Instagram", instagramHandle(y.instagram) || y.instagram);
     box.appendChild(dl);
     box.appendChild(h("button", { type: "button", class: "btn btn-ghost br-small pt-edit", onclick: function () { show("you"); } }, ["Change your details"]));
 
@@ -575,6 +588,7 @@
     if (y.organisationName) body.organisationName = y.organisationName;
     if (y.phone) body.phone = y.phone;
     if (y.website) body.website = y.website;
+    if (y.instagram) body.instagram = instagramHandle(y.instagram) || y.instagram;
     var res = null;
     try {
       res = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });

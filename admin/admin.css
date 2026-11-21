@@ -226,3 +226,12 @@ input.wgg-code { width: 100%; padding: 10px 12px; border: 2px solid var(--line);
   padding: 4px 10px; font-size: .75rem; font-weight: 600; cursor: pointer;
 }
 .wgg-demo[aria-pressed="true"] { border: 1px solid var(--ink); background: var(--accent); color: var(--ink); }
+
+/* Editing a listing or application that is waiting for approval */
+.wgg-edit { display: grid; gap: 12px; }
+.wgg-edit-group { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; }
+.wgg-edit-group h3 { margin: 0; }
+.wgg-edit-field { display: grid; gap: 4px; }
+.wgg-edit-field label { font-weight: 600; font-size: .9rem; }
+.wgg-edit-field input, .wgg-edit-field select, .wgg-edit-field textarea { width: 100%; padding: 9px 11px; border: 2px solid var(--line); border-radius: 10px; background: var(--paper); }
+.wgg-edit-field input:focus, .wgg-edit-field select:focus, .wgg-edit-field textarea:focus { border-color: var(--ink); outline: none; }

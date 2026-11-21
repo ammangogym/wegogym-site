@@ -46,6 +46,18 @@ Written 2026-11-21. Not live. The user approves on the demo before anything goes
 **Bugs fixed on the branch (both are live on `main` today):** the £ sign overlaps typed prices on the
 events form; hidden business fields (e.g. "Tell us what kind of place it is") show anyway.
 
+## Added later on 2026-11-21 (also on the branch and in the demo)
+
+- **Events, About you:** Website and Instagram are two separate boxes (`y-site`, `y-ig`). Instagram accepts
+  `@name`, `name` or an instagram.com link and is stored as `@name`. Review screen and admin show both.
+- **Events, step 2:** note that an event in a new location is a new event, and that a regularly changing
+  place should be typed as TBA (callout under the intro and in the "Where is it?" hint).
+- **Admin editing while awaiting approval** (`admin/admin.js`, `admin.css`): "Edit this listing" on a
+  business whose status is draft, pending or changes_requested; "Edit this application" on an event
+  application that is new or contacted. Live, rejected, approved and declined ones are read-only.
+  Demo has an Admin page with made-up data (`admin-demo.js`).
+- Admin edit is not saved on the live database yet (see go-live item 5).
+
 ## User decisions this session
 
 - Discounts are the easy default: a percentage, prefilled at 50%, with an option to type the discounted
@@ -71,7 +83,15 @@ events form; hidden business fields (e.g. "Tell us what kind of place it is") sh
 2. **Save per-day event details.** Needs a migration (e.g. `partnership_events.day_details` jsonb:
    weekday, start/end time, area, price_pence, discount_percent), the `submit_partnership_application`
    function, the `partnerships` edge function's checks, and the admin screen's display.
+5. **Admin edit and Instagram need database work.** New functions `admin_update_venue(p_venue_id uuid,
+   p_fields jsonb)` (whitelist: name, description, address lines, city, region, postcode, maps links,
+   contact name/email/phone, legal_name, company_number; only while status is draft, pending or
+   changes_requested; add a history note kind `edited`) and `admin_update_partnership(p_id uuid, p_fields jsonb)`
+   (contact + per-event fields, keyed by event id; only while status is new or contacted). Both need
+   `app.is_admin()` like the other admin functions. Add `instagram` to the partnership application table,
+   `submit_partnership_application`, the `partnerships` edge function's checks, and `admin_list_partnerships`.
+   The admin page expects each event in the list to carry its `id`.
 3. Bump `?v=` on `business-register.js` (now `v=4`), add one to `business-register.css`, bump
-   `partnerships.css` / `partnerships.js`.
+   `partnerships.css` / `partnerships.js` (done on the branch: `20261121c` / `20261121e`) and `admin.css` / `admin.js` (`20261121a`).
 4. Run the ad-blocker check and the click-through tests against the real pages, merge `signup-v2` into
    `main`, push, check the live pages.

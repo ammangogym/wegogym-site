@@ -28,8 +28,8 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/waitlist/waitlist.css">
   <link rel="stylesheet" href="/business-register/business-register.css">
-  <link rel="stylesheet" href="/partnerships/partnerships.css?v=20261121b">
-  <script src="/partnerships/partnerships.js?v=20261121d" defer></script>
+  <link rel="stylesheet" href="/partnerships/partnerships.css?v=20261121c">
+  <script src="/partnerships/partnerships.js?v=20261121e" defer></script>
 </head>
 <body class="page-waitlist page-pt">
 
@@ -81,9 +81,14 @@
           <p class="wl-hint" id="y-country-hint">Where you or your business are based. Money from paid tickets goes to a bank account in this country.</p>
         </div>
         <div class="br-field">
-          <label for="y-site">Website or Instagram <span class="wl-optional">(optional)</span></label>
-          <input type="text" id="y-site" autocomplete="off" maxlength="200" spellcheck="false" aria-describedby="y-site-hint">
-          <p class="wl-hint" id="y-site-hint">Somewhere we can see what you already run.</p>
+          <label for="y-site">Website <span class="wl-optional">(optional)</span></label>
+          <input type="text" id="y-site" autocomplete="off" maxlength="200" spellcheck="false" inputmode="url" aria-describedby="y-site-hint">
+          <p class="wl-hint" id="y-site-hint">Somewhere we can see what you already run, for example yourgroup.com.</p>
+        </div>
+        <div class="br-field">
+          <label for="y-ig">Instagram <span class="wl-optional">(optional)</span></label>
+          <input type="text" id="y-ig" autocomplete="off" maxlength="100" spellcheck="false" placeholder="@yourgroup" aria-describedby="y-ig-hint">
+          <p class="wl-hint" id="y-ig-hint">Your account name, with or without the @.</p>
         </div>
         <!-- Honeypot: people never see or fill this, bots do -->
         <div class="hp" aria-hidden="true">
@@ -99,6 +104,7 @@
       <form class="pt-step" data-step="events" aria-labelledby="h-events" novalidate hidden>
         <h2 class="wl-step-title" id="h-events" tabindex="-1">Your events</h2>
         <p class="wl-hint pt-intro">Add each event you run. For something that happens every week, add it once and choose that it repeats.</p>
+        <p class="pt-tip" id="pt-place-note"><b>Where it happens:</b> if an event takes place in a new location, add it as a new event. If the location changes regularly, type TBA as the place.</p>
         <div class="pt-planner">
           <div>
             <div id="pt-events"></div>

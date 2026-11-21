@@ -35,7 +35,8 @@
     session: null, view: "biz", venues: null, filter: "all", search: "",
     stats: null, days: 30, openVenueId: null, seen: null,
     wlBaseline: null, wlOpenedAt: null, busy: false, lastOk: 0,
-    partnerships: null, ptSetupMissing: false, ptFilter: "all", ptSearch: "", openPtId: null
+    partnerships: null, ptSetupMissing: false, ptFilter: "all", ptSearch: "", openPtId: null,
+    editVenue: false, venueData: null, editPt: false
   };
 
   function $(id) { return document.getElementById(id); }
@@ -435,7 +436,14 @@
       ? h("a", { href: url, target: "_blank", rel: "noopener noreferrer", text: label }) : null;
   }
 
+  // A listing can be corrected by an admin until it has been decided: not once it is live,
+  // rejected or suspended.
+  function venueEditable(v) { return ["draft", "pending", "changes_requested"].indexOf(v.status) >= 0; }
+
   function renderVenue(d) {
+    state.venueData = d;
+    if (state.editVenue && venueEditable(d.venue)) { renderVenueEdit(d); return; }
+    state.editVenue = false;
     var v = d.venue;
     $("d-name").textContent = v.name || "(no name yet)";
     var body = $("d-body");
@@ -443,6 +451,12 @@
     var email = v.contact_email || (d.owner && d.owner.email) || "";
 
     body.appendChild(h("div", { class: "wgg-tags wgg-section" }, statusTags({ status: v.status, intake: d.intake && d.intake.decision })));
+    if (venueEditable(v)) {
+      body.appendChild(h("div", { class: "wgg-section wgg-actions" }, [
+        h("button", { type: "button", class: "wgg-btn wgg-btn-secondary wgg-btn-sm", id: "d-edit", onclick: function () { state.editVenue = true; renderVenue(state.venueData); $("d-e-name").focus(); } }, ["Edit this listing"]),
+        h("span", { class: "wgg-muted wgg-small", text: "Fix details while it waits for approval." })
+      ]));
+    }
 
     // Decision and message
     var msg = h("textarea", { id: "d-msg", rows: "4", maxlength: "4000", placeholder: "Message or note" });
@@ -520,6 +534,61 @@
       ]);
     });
     body.appendChild(section("History", hist.length ? hist : [h("p", { class: "wgg-muted", text: "No notes yet." })]));
+  }
+
+
+  // ----- Editing a listing that is still waiting -----
+  var VENUE_FIELDS = [
+    ["name", "Name", "text", 120], ["description", "Description", "area", 2000],
+    ["address_line1", "Address line 1", "text", 120], ["address_line2", "Address line 2", "text", 120],
+    ["city", "Town or city", "text", 80], ["region", "County or region", "text", 80], ["postcode", "Postcode", "text", 20],
+    ["google_maps_url", "Google Maps link", "text", 500], ["apple_maps_url", "Apple Maps link", "text", 500],
+    ["contact_name", "Contact name", "text", 120], ["contact_email", "Contact email", "email", 254], ["contact_phone", "Contact phone", "text", 40],
+    ["legal_name", "Registered name", "text", 160], ["company_number", "Company number", "text", 20]
+  ];
+  var VENUE_IDS = { name: "d-e-name" };
+
+  // One labelled box. `idPrefix` keeps ids unique; the box is read back by its data-key.
+  function editField(idPrefix, key, label, kind, max, value) {
+    var id = idPrefix + key;
+    var box = kind === "area" ? h("textarea", { id: id, rows: "4", maxlength: String(max) }) : h("input", { id: id, type: kind, maxlength: String(max), autocomplete: "off" });
+    box.value = value === null || value === undefined ? "" : String(value);
+    box.setAttribute("data-key", key);
+    return h("div", { class: "wgg-edit-field" }, [h("label", { for: id, text: label }), box]);
+  }
+  function readEdits(root) {
+    var out = {};
+    Array.prototype.forEach.call(root.querySelectorAll("[data-key]"), function (el) { out[el.getAttribute("data-key")] = el.value.trim(); });
+    return out;
+  }
+
+  function renderVenueEdit(d) {
+    var v = d.venue, body = $("d-body");
+    $("d-name").textContent = v.name || "(no name yet)";
+    body.textContent = "";
+    var form = h("form", { class: "wgg-edit", novalidate: true });
+    form.appendChild(h("p", { class: "wgg-callout", text: "You are editing this listing while it waits. Changes are saved straight to the listing the business submitted, and recorded in History." }));
+    VENUE_FIELDS.forEach(function (f) {
+      var fld = editField("d-e-", f[0], f[1], f[2], f[3], v[f[0]]);
+      form.appendChild(fld);
+    });
+    form.appendChild(h("div", { class: "wgg-actions" }, [
+      h("button", { type: "submit", class: "wgg-btn wgg-btn-primary" }, ["Save changes"]),
+      h("button", { type: "button", class: "wgg-btn wgg-btn-ghost", onclick: function () { state.editVenue = false; renderVenue(state.venueData); } }, ["Cancel"])
+    ]));
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var fields = readEdits(form);
+      if (!fields.name) { alertMsg("The listing needs a name."); $("d-e-name").focus(); return; }
+      if (fields.contact_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.contact_email)) { alertMsg("Enter the contact email like name@example.com."); $("d-e-contact_email").focus(); return; }
+      ["google_maps_url", "apple_maps_url"].forEach(function (k) { if (fields[k] && !/^https:\/\//i.test(fields[k])) fields[k] = ""; });
+      withButton({ currentTarget: form.querySelector('[type="submit"]') }, async function () {
+        await rpc("admin_update_venue", { p_venue_id: v.id, p_fields: fields });
+        state.editVenue = false;
+        await afterChange(v.id, "Listing updated.");
+      });
+    });
+    body.appendChild(form);
   }
 
   async function withButton(e, fn) {
@@ -675,9 +744,14 @@
     document.body.style.overflow = "";
   }
 
+  // An application can be corrected until it is approved or declined.
+  function ptEditable(a) { return a.status === "new" || a.status === "contacted"; }
+
   function renderPartnership() {
     var a = (state.partnerships || []).filter(function (x) { return x.id === state.openPtId; })[0];
     if (!a) { closePtDrawer(); return; }
+    if (state.editPt && ptEditable(a)) { renderPartnershipEdit(a); return; }
+    state.editPt = false;
     $("pt-d-name").textContent = a.organisation_name || a.organiser_name;
     var body = $("pt-d-body");
     body.textContent = "";
@@ -687,13 +761,21 @@
       a.decided_at ? "  Decided " + fmtDateTime(a.decided_at) : ""
     ])]));
 
+    if (ptEditable(a)) {
+      body.appendChild(h("div", { class: "wgg-section wgg-actions" }, [
+        h("button", { type: "button", class: "wgg-btn wgg-btn-secondary wgg-btn-sm", id: "pt-edit", onclick: function () { state.editPt = true; renderPartnership(); $("pt-e-organiser_name").focus(); } }, ["Edit this application"]),
+        h("span", { class: "wgg-muted wgg-small", text: "Fix details while it waits for approval." })
+      ]));
+    }
+
     body.appendChild(section("Contact", [dl([
       ["Name", a.organiser_name],
       ["Group or business", a.organisation_name],
       ["Email", h("a", { href: "mailto:" + a.email, text: a.email })],
       ["Phone", a.phone],
       ["Based in", a.city],
-      ["Website or Instagram", a.website],
+      ["Website", a.website],
+      ["Instagram", a.instagram],
       ["Applied", fmtDateTime(a.created_at)],
       ["Privacy notice", a.privacy_version]
     ])]));
@@ -733,6 +815,93 @@
         btn("Back to new", "new", "wgg-btn-ghost")
       ])
     ]));
+  }
+
+
+  var PT_CONTACT_FIELDS = [
+    ["organiser_name", "Name", "text", 120], ["organisation_name", "Group or business", "text", 120],
+    ["email", "Email", "email", 254], ["phone", "Phone", "text", 40], ["city", "Town or city", "text", 80],
+    ["website", "Website", "text", 200], ["instagram", "Instagram", "text", 100]
+  ];
+  function timeValue(t) { return t ? String(t).slice(0, 5) : ""; }
+
+  function renderPartnershipEdit(a) {
+    $("pt-d-name").textContent = a.organisation_name || a.organiser_name;
+    var body = $("pt-d-body");
+    body.textContent = "";
+    var form = h("form", { class: "wgg-edit", novalidate: true });
+    form.appendChild(h("p", { class: "wgg-callout", text: "You are editing this application while it waits. Nothing is published, and the organiser is not emailed about the change." }));
+
+    var contact = h("div", { class: "wgg-edit-group" }, [h("h3", { text: "Contact" })]);
+    PT_CONTACT_FIELDS.forEach(function (f) { contact.appendChild(editField("pt-e-", f[0], f[1], f[2], f[3], a[f[0]])); });
+    form.appendChild(contact);
+
+    var eventBoxes = [];
+    (a.events || []).forEach(function (e, i) {
+      var g = h("div", { class: "wgg-edit-group" }, [h("h3", { text: "Event " + (i + 1) + (e.title ? ": " + e.title : "") })]);
+      var p = "pt-e" + i + "-";
+      g.appendChild(editField(p, "title", "Name", "text", 120, e.title));
+      var catSel = h("select", { id: p + "category" });
+      Object.keys(PT_CATEGORY).forEach(function (k) { var o = h("option", { value: k, text: PT_CATEGORY[k] }); if (k === e.category) o.selected = true; catSel.appendChild(o); });
+      catSel.setAttribute("data-key", "category");
+      g.appendChild(h("div", { class: "wgg-edit-field" }, [h("label", { for: p + "category", text: "Kind" }), catSel]));
+      g.appendChild(editField(p, "area", "Where (type TBA if the place changes regularly)", "text", 120, e.area));
+      g.appendChild(editField(p, "description", "What happens", "area", 1000, e.description));
+      g.appendChild(editField(p, "first_date", "First date", "date", 10, e.first_date));
+      if (e.schedule === "recurring") g.appendChild(editField(p, "ends_on", "Stops repeating on", "date", 10, e.ends_on));
+      g.appendChild(editField(p, "start_time", "Starts at", "time", 5, timeValue(e.start_time)));
+      g.appendChild(editField(p, "end_time", "Ends at", "time", 5, timeValue(e.end_time)));
+      if (e.price_type === "ticketed") g.appendChild(editField(p, "price", "Price per ticket (£)", "text", 9, e.price_pence ? (e.price_pence / 100).toFixed(2) : ""));
+      g.appendChild(editField(p, "capacity", "Most people", "text", 6, e.capacity));
+      g.appendChild(editField(p, "existing_listing_url", "Where they book now", "text", 300, e.existing_listing_url));
+      if (e.schedule === "recurring") g.appendChild(h("p", { class: "wgg-muted wgg-small", text: "Repeat pattern and any day-by-day differences cannot be changed here. Ask the organiser, or note them for yourself." }));
+      eventBoxes.push({ id: e.id, el: g, e: e });
+      form.appendChild(g);
+    });
+
+    form.appendChild(h("div", { class: "wgg-actions" }, [
+      h("button", { type: "submit", class: "wgg-btn wgg-btn-primary" }, ["Save changes"]),
+      h("button", { type: "button", class: "wgg-btn wgg-btn-ghost", onclick: function () { state.editPt = false; renderPartnership(); } }, ["Cancel"])
+    ]));
+    form.addEventListener("submit", async function (ev) {
+      ev.preventDefault();
+      if (state.busy) return;
+      var c = readEdits(contact);
+      if (!c.organiser_name) { alertMsg("The application needs a name."); $("pt-e-organiser_name").focus(); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)) { alertMsg("Enter the email like name@example.com."); $("pt-e-email").focus(); return; }
+      var events = [];
+      for (var i = 0; i < eventBoxes.length; i++) {
+        var x = readEdits(eventBoxes[i].el), orig = eventBoxes[i].e;
+        if (!x.title || !x.area || !x.first_date || !x.start_time) { alertMsg("Event " + (i + 1) + " needs a name, a place, a date and a start time."); return; }
+        if (x.price !== undefined) {
+          var m = /^£?\s*(\d{1,4})(?:\.(\d{1,2}))?$/.exec(x.price);
+          var pence = m ? parseInt(m[1], 10) * 100 + (m[2] ? parseInt((m[2] + "0").slice(0, 2), 10) : 0) : 0;
+          if (pence < 100 || pence > 100000) { alertMsg("Event " + (i + 1) + ": enter a price between £1.00 and £1,000.00."); return; }
+          x.price_pence = pence; delete x.price;
+        }
+        if (x.capacity) { var cap = Number(x.capacity); if (!(Math.floor(cap) === cap && cap >= 1 && cap <= 100000)) { alertMsg("Event " + (i + 1) + ": most people must be a whole number."); return; } x.capacity = cap; }
+        else x.capacity = null;
+        x.id = orig.id;
+        events.push(x);
+      }
+      state.busy = true;
+      var btn = form.querySelector('[type="submit"]'); btn.disabled = true; btn.textContent = "Saving…";
+      alertMsg("");
+      try {
+        await rpc("admin_update_partnership", { p_id: a.id, p_fields: { contact: c, events: events } });
+        state.editPt = false;
+        await loadPartnerships();
+        renderPartnerships();
+        renderPartnership();
+        alertMsg("Application updated.", true);
+        announce("Application updated.");
+        markOk();
+      } catch (err) {
+        alertMsg(err.code === "WGG23" ? "That application no longer exists. Refresh the list." : messageFor(err));
+        btn.disabled = false; btn.textContent = "Save changes";
+      } finally { state.busy = false; }
+    });
+    body.appendChild(form);
   }
 
   async function setPtStatus(e, id, status) {
