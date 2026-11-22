@@ -583,6 +583,9 @@
     // A shared computer: nothing the last person typed may carry over to the next account.
     document.querySelectorAll("form").forEach(function (f) { f.reset(); clearErrors(f); });
     $("f-photos").textContent = "";
+    closeCodeBox();
+    $("tm-code-email").textContent = "";
+    $("tm-list").textContent = ""; $("tm-list").hidden = true; state.team = [];
   }
 
   // ===== Field errors =====
@@ -1781,7 +1784,7 @@
       var right = el("label", { for: id }, [box, el("span", { text: "Booking emails" })]);
       if (t.confirmed === false) {
         var enter = el("button", { type: "button", class: "btn btn-ghost br-small", text: "Enter code" });
-        enter.addEventListener("click", function () { openCodeBox(t.email); });
+        enter.addEventListener("click", function () { openCodeBox(t.email, false); });
         right = el("span", { class: "br-fd-wait" }, [el("span", { text: "Waiting for code" }), enter, right]);
       }
       list.appendChild(el("li", {}, [el("span", { text: t.email }), right]));
@@ -1798,13 +1801,12 @@
     await fn("create-venue-operator", { venue_id: state.venue.id, email: email, password: pw, booking_alerts: $("tm-alerts").checked });
     ["tm-email", "tm-pw", "tm-pw2"].forEach(function (id) { $(id).value = ""; });
     await renderTeam();
-    openCodeBox(email);
+    openCodeBox(email, true);
     try {
       await sendOperatorCode();
       showAlert("");
     } catch (err) {
-      if (err.code === "session") throw err;
-      showAlert("Login created for " + email + ", but we could not send the code. Press “Send a new code” to try again.");
+      showAlert("Login created for " + email + ", but the code was not sent. " + messageFor(err));
     }
   }
 
@@ -1815,15 +1817,24 @@
   // front-desk account, which this page never keeps: it is signed out at once, so the owner
   // stays logged in. A code not entered now can still be entered from the list later, and
   // the front-desk person is asked for one on their first login at /business/.
-  function openCodeBox(email) {
+  // sent: true right after the login is added (a code is on its way); false when reopened from
+  // the list, where an earlier code may have expired.
+  function openCodeBox(email, sent) {
     state.fdPending = email;
     $("tm-code-email").textContent = email;
+    $("tm-code-lead").textContent = sent ? "We sent a 6-digit code to " : "Type the 6-digit code we emailed to ";
+    $("tm-code-tail").textContent = sent
+      ? ". Ask them for it and type it below. The login works only once the code is entered"
+      : ". If they do not have one, or it is over an hour old, press “Send a new code”";
+    var rb = $("tm-code-resend");
+    clearTimeout(resendTimer); rb.disabled = false; rb.textContent = "Send a new code";
     $("tm-code").value = "";
     clearErrors($("tm-code-box"));
     $("tm-new").hidden = true;
     $("tm-code-box").hidden = false;
     $("tm-code").focus();
   }
+  var resendTimer = null;
   function closeCodeBox() {
     state.fdPending = null;
     $("tm-code-box").hidden = true;
@@ -1850,13 +1861,14 @@
   async function resendOperatorCode() {
     var b = $("tm-code-resend");
     if (b.disabled) return;
+    clearTimeout(resendTimer);
     b.disabled = true;
     try {
       await sendOperatorCode();
       showAlert("");
       announce("A new code is on its way");
       b.textContent = "Sent. Check their inbox";
-      setTimeout(function () { b.disabled = false; b.textContent = "Send a new code"; }, 60000);
+      resendTimer = setTimeout(function () { b.disabled = false; b.textContent = "Send a new code"; }, 60000);
     } catch (err) {
       b.disabled = false;
       handleError(err);

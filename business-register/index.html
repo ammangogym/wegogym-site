@@ -414,7 +414,7 @@
       <button type="button" class="btn btn-secondary br-small" id="tm-add">Add this login</button>
       </div>
       <div class="br-fd-code" id="tm-code-box" hidden>
-        <p>We sent a 6-digit code to <b id="tm-code-email"></b>. Ask them for it and type it below. The login works only once the code is entered</p>
+        <p><span id="tm-code-lead">We sent a 6-digit code to </span><b id="tm-code-email"></b><span id="tm-code-tail">. Ask them for it and type it below. The login works only once the code is entered</span></p>
         <div class="br-field">
           <label for="tm-code">Code</label>
           <input type="text" id="tm-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" class="br-code">
