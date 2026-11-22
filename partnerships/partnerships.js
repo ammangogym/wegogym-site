@@ -179,7 +179,7 @@
         if (box === autoDay) autoDay = null; // the organiser has made this day their own choice
         setError(dayBoxes[0], ""); setError(date, "");
       });
-      dayChips.appendChild(h("label", { class: "chip", for: did }, [box, h("span", { text: d[1] })]));
+      dayChips.appendChild(h("label", { class: "chip chip-day", for: did }, [box, h("span", { text: d[1] })]));
       return box;
     });
     var daysBox = h("fieldset", { class: "pt-choice", id: p + "-days" }, [
@@ -216,12 +216,12 @@
 
     more.appendChild(field(p + "-recurrence", "How often", recurrence));
     more.appendChild(daysBox);
-    more.appendChild(field(p + "-endson", "Stop repeating on", endsOn, { optional: true, hint: "Leave this empty if it carries on with no end date." }));
+    more.appendChild(field(p + "-endson", "Stop repeating on", endsOn, { optional: true, hint: "Leave this empty if it carries on with no end date" }));
 
     var priceBox = h("div", { class: "pt-more", id: p + "-price-more", hidden: true });
     var price = input(p + "-price", "text", { inputmode: "decimal", autocomplete: "off", maxlength: "9" });
     priceBox.appendChild(field(p + "-price", "Price per ticket", h("div", { class: "pt-money" }, [h("span", { "aria-hidden": "true", text: "£" }), price]),
-      { hint: "Between £1.00 and £1,000.00." }));
+      { hint: "Between £1.00 and £1,000.00" }));
     priceBox.appendChild(h("p", { class: "pt-tip", text: "Tip: charge less for your quieter dates and times. Similar events on WeGoGym are running discounts on their quieter sessions to fill spaces. If it runs on more than one day, you can give a quieter day a discount below." }));
     var pricing = radios(p + "-pricing", p + "-pricetype", "Is it free?",
       [["free", "Free, people just RSVP"], ["ticketed", "Paid tickets"]], function () {
@@ -299,7 +299,7 @@
       field(p + "-title", "What is it called?", title),
       field(p + "-cat", "What kind of event is it?", cat),
       field(p + "-area", "Where is it?", area, { hint: "The area or venue name, for example Victoria Park, Hackney. A new location is a new event. If the place changes regularly, type TBA." }),
-      field(p + "-desc", "What happens?", desc, { optional: true, hint: "A sentence or two for someone deciding whether to come." }),
+      field(p + "-desc", "What happens?", desc, { optional: true, hint: "A sentence or two for someone deciding whether to come" }),
       schedule,
       dateField,
       h("div", { class: "pt-times" }, [
@@ -311,7 +311,7 @@
       priceBox,
       diffWrap,
       diffBox,
-      field(p + "-cap", "Most people you can take", cap, { optional: true, hint: "Leave this empty if there is no limit." }),
+      field(p + "-cap", "Most people you can take", cap, { optional: true, hint: "Leave this empty if there is no limit" }),
       field(p + "-url", "Where do people book now?", url, { optional: true, hint: "A link to your current page or ticket link, if you have one. Start it with https://" })
     ]);
     card._f = { perDay: perDay, diffOn: function () { return !diffBox.hidden; }, title: title, cat: cat, area: area, desc: desc, recurrence: recurrence, days: dayBoxes, endsOn: endsOn, date: date, start: start, end: end, price: price, cap: cap, url: url, p: p };
@@ -398,11 +398,11 @@
     function fail(el, msg) { setError(el, msg); if (!bad) bad = el; }
     clearErrorsOn($("pt-app").querySelector('[data-step="you"]'));
     var y = readYou();
-    if (!y.organiserName) fail($("y-name"), "Enter your name.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(y.email)) fail($("y-email"), "Enter an email address like name@example.com.");
-    if (y.phone && !/^[0-9+()\-. ]{6,40}$/.test(y.phone)) fail($("y-phone"), "Use digits, spaces and + only, for example +44 7700 900123.");
-    if (!y.city) fail($("y-city"), "Enter the town or city your events are in.");
-    if (!/^[A-Z]{2}$/.test(y.country)) fail($("y-country"), "Choose your country.");
+    if (!y.organiserName) fail($("y-name"), "Enter your name");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(y.email)) fail($("y-email"), "Enter an email address like name@example.com");
+    if (y.phone && !/^[0-9+()\-. ]{6,40}$/.test(y.phone)) fail($("y-phone"), "Use digits, spaces and + only, for example +44 7700 900123");
+    if (!y.city) fail($("y-city"), "Enter the town or city your events are in");
+    if (!/^[A-Z]{2}$/.test(y.country)) fail($("y-country"), "Choose your country");
     if (y.website && !/^(https?:\/\/)?[^\s\/@]+\.[^\s\/@]{2,}(\/\S*)?$/i.test(y.website)) fail($("y-site"), "Enter a website address like yourgroup.com. Put your Instagram in the Instagram box.");
     if (y.instagram) {
       var ig = instagramHandle(y.instagram);
@@ -458,30 +458,30 @@
     Array.prototype.forEach.call($("pt-events").children, function (card) {
       var f = card._f, e = readEvent(card);
       clearErrorsOn(card);
-      if (!e.title) fail(f.title, "Give the event a name.");
-      if (!e.category) fail(f.cat, "Choose the kind of event.");
-      if (!e.area) fail(f.area, "Say where it happens.");
-      if (!isRealDate(e.firstDate)) fail(f.date, "Choose a date.");
-      else if (e.firstDate < today) fail(f.date, "Choose today or a later date.");
-      else if (e.firstDate > addDays(today, MAX_FIRST_DATE_DAYS)) fail(f.date, "Choose a date within the next 18 months.");
-      if (!e.startTime) fail(f.start, "Choose a start time.");
+      if (!e.title) fail(f.title, "Give the event a name");
+      if (!e.category) fail(f.cat, "Choose the kind of event");
+      if (!e.area) fail(f.area, "Say where it happens");
+      if (!isRealDate(e.firstDate)) fail(f.date, "Choose a date");
+      else if (e.firstDate < today) fail(f.date, "Choose today or a later date");
+      else if (e.firstDate > addDays(today, MAX_FIRST_DATE_DAYS)) fail(f.date, "Choose a date within the next 18 months");
+      if (!e.startTime) fail(f.start, "Choose a start time");
       if (e.weekdays) {
-        if (!e.weekdays.length) fail(f.days[0], "Tick at least one day.");
+        if (!e.weekdays.length) fail(f.days[0], "Tick at least one day");
         else if (isRealDate(e.firstDate) && e.weekdays.indexOf(isoWeekday(e.firstDate)) < 0) {
           var dn = DAYS[isoWeekday(e.firstDate) - 1][2];
           fail(f.date, "This date is a " + dn + ". Tick " + dn + " too, or choose a first date on one of the days you ticked.");
         }
       }
       if (e.schedule === "recurring" && e.endsOn) {
-        if (isRealDate(e.firstDate) && e.endsOn < e.firstDate) fail(f.endsOn, "Choose a date after the first one, or leave it empty.");
-        else if (e.endsOn > addDays(today, MAX_SERIES_END_DAYS)) fail(f.endsOn, "Choose a date within the next two years, or leave it empty.");
+        if (isRealDate(e.firstDate) && e.endsOn < e.firstDate) fail(f.endsOn, "Choose a date after the first one, or leave it empty");
+        else if (e.endsOn > addDays(today, MAX_SERIES_END_DAYS)) fail(f.endsOn, "Choose a date within the next two years, or leave it empty");
       }
-      if (e.priceType === "ticketed" && e.pricePence === null) fail(f.price, "Enter a price between £1.00 and £1,000.00, for example 8.50.");
+      if (e.priceType === "ticketed" && e.pricePence === null) fail(f.price, "Enter a price between £1.00 and £1,000.00, for example 8.50");
       (e.dayDetails || []).forEach(function (d) {
-        if (d.pricePence === null) fail(f.perDay[d.weekday].price, "Enter a price between £1.00 and £1,000.00, or leave it empty.");
-        if (d.discountPercent === null) fail(f.perDay[d.weekday].pct, "Enter a percentage between 1 and 99, or leave it empty.");
+        if (d.pricePence === null) fail(f.perDay[d.weekday].price, "Enter a price between £1.00 and £1,000.00, or leave it empty");
+        if (d.discountPercent === null) fail(f.perDay[d.weekday].pct, "Enter a percentage between 1 and 99, or leave it empty");
       });
-      if (e.capacity !== undefined && !(Math.floor(e.capacity) === e.capacity && e.capacity >= 1 && e.capacity <= 100000)) fail(f.cap, "Enter a whole number, or leave it empty.");
+      if (e.capacity !== undefined && !(Math.floor(e.capacity) === e.capacity && e.capacity >= 1 && e.capacity <= 100000)) fail(f.cap, "Enter a whole number, or leave it empty");
       if (e.existingListingUrl && !/^https?:\/\/\S+$/i.test(e.existingListingUrl)) fail(f.url, "Start the link with https://");
       // Empty optional values are left out of the request.
       if (!e.description) delete e.description;
@@ -571,7 +571,7 @@
     var over = $("r-over18"), terms = $("r-terms"), err = $("r-error");
     err.hidden = true;
     if (!over.checked || !terms.checked) {
-      err.textContent = "Tick both boxes to send your application.";
+      err.textContent = "Tick both boxes to send your application";
       err.hidden = false;
       (over.checked ? terms : over).focus();
       return;
@@ -632,8 +632,8 @@
   // ----- ID check -----
   var ID_COPY = {
     identity_unavailable: "ID checks are not open yet. Your application is sent, and we will email you when you can do this.",
-    already_verified: "You have already confirmed your identity.",
-    under_18: "You need to be 18 or over to run events on WeGoGym.",
+    already_verified: "You have already confirmed your identity",
+    under_18: "You need to be 18 or over to run events on WeGoGym",
     too_many_attempts: "You have used all your tries at the ID check. Email hello@wegogym.club and we will help.",
     rate_limited: "Too many tries in a short time. Wait an hour and try again, or email hello@wegogym.club.",
     forbidden: "This page can no longer continue for that application. Email hello@wegogym.club and we will help you finish.",
@@ -659,7 +659,7 @@
       status.textContent = "Stripe is checking your ID. This usually takes a minute or two.";
       again.hidden = false;
     } else if (r.identity === "under_18") {
-      status.textContent = "You need to be 18 or over to run events on WeGoGym.";
+      status.textContent = "You need to be 18 or over to run events on WeGoGym";
       $("id-later").hidden = true;
     } else if (r.identity === "too_many") {
       status.textContent = "Stripe could not confirm your ID, and you have used all your tries. Email hello@wegogym.club and we will help.";
@@ -667,7 +667,7 @@
       status.textContent = "Stripe could not confirm your ID. Make sure the photo is clear and the document is in date, then try again.";
       go.hidden = false; go.textContent = "Try again";
     } else {
-      status.textContent = r.identity === "pending" ? "You have not finished the ID check yet." : "";
+      status.textContent = r.identity === "pending" ? "You have not finished the ID check yet" : "";
       go.hidden = false;
     }
     if (status.textContent) announce(status.textContent);
@@ -697,8 +697,8 @@
     onboarding_in_progress: "Your Stripe account is still being set up. Wait a few seconds and try again.",
     rate_limited: "Too many tries in a short time. Wait an hour and try again, or email hello@wegogym.club.",
     forbidden: "This page can no longer connect Stripe for that application. Email hello@wegogym.club and we will send you a way to finish.",
-    identity_required: "Confirm your identity first, then set up payments.",
-    no_paid_events: "Your application has no paid events, so there is nothing to set up.",
+    identity_required: "Confirm your identity first, then set up payments",
+    no_paid_events: "Your application has no paid events, so there is nothing to set up",
     other: "We could not reach Stripe. Check your connection and try again."
   };
 
@@ -724,7 +724,7 @@
     catch (err) { status.textContent = ""; alertMsg(PAY_COPY[err.code] || PAY_COPY.other); return; }
     if (r.details_submitted) {
       status.textContent = r.charges_enabled
-        ? "Your Stripe account is connected and ready to receive ticket money."
+        ? "Your Stripe account is connected and ready to receive ticket money"
         : "Your details are with Stripe. They are usually checked within minutes, sometimes a few days.";
       next.hidden = false;
       go.hidden = !r.needs_more_info;

@@ -27,9 +27,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/waitlist/waitlist.css">
-  <link rel="stylesheet" href="/business-register/business-register.css">
+  <link rel="stylesheet" href="/business-register/business-register.css?v=2">
   <link rel="stylesheet" href="/partnerships/partnerships.css?v=20261121c">
-  <script src="/partnerships/partnerships.js?v=20261121e" defer></script>
+  <script src="/time-field.js?v=1" defer></script>
+  <script src="/partnerships/partnerships.js?v=20261122a" defer></script>
 </head>
 <body class="page-waitlist page-pt">
 
@@ -41,7 +42,7 @@
     <h1 class="wl-title" id="pt-title" tabindex="-1">Partnerships</h1>
     <p class="wl-lede">Already run events? Tell us about them. Add as many as you like, one-off or recurring. We read every application ourselves and will email you. Nothing is published until we have spoken.</p>
 
-    <noscript><p class="wl-alert">This form needs JavaScript switched on in your browser.</p></noscript>
+    <noscript><p class="wl-alert">This form needs JavaScript switched on in your browser</p></noscript>
 
     <div id="pt-app" hidden>
       <div class="wl-progress" aria-hidden="true"><span class="wl-progress-bar" id="pt-bar"></span></div>
@@ -64,7 +65,7 @@
         <div class="br-field">
           <label for="y-email">Email address</label>
           <input type="email" id="y-email" autocomplete="email" inputmode="email" maxlength="254" required aria-describedby="y-email-hint">
-          <p class="wl-hint" id="y-email-hint">We reply here.</p>
+          <p class="wl-hint" id="y-email-hint">We reply here</p>
         </div>
         <div class="br-field">
           <label for="y-phone">Phone <span class="wl-optional">(optional)</span></label>
@@ -73,7 +74,7 @@
         <div class="br-field">
           <label for="y-city">Town or city your events are in</label>
           <input type="text" id="y-city" autocomplete="address-level2" maxlength="80" required aria-describedby="y-city-hint">
-          <p class="wl-hint" id="y-city-hint">We are launching in London first.</p>
+          <p class="wl-hint" id="y-city-hint">We are launching in London first</p>
         </div>
         <div class="br-field">
           <label for="y-country">Country</label>
@@ -83,12 +84,12 @@
         <div class="br-field">
           <label for="y-site">Website <span class="wl-optional">(optional)</span></label>
           <input type="text" id="y-site" autocomplete="off" maxlength="200" spellcheck="false" inputmode="url" aria-describedby="y-site-hint">
-          <p class="wl-hint" id="y-site-hint">Somewhere we can see what you already run, for example yourgroup.com.</p>
+          <p class="wl-hint" id="y-site-hint">Somewhere we can see what you already run, for example yourgroup.com</p>
         </div>
         <div class="br-field">
           <label for="y-ig">Instagram <span class="wl-optional">(optional)</span></label>
           <input type="text" id="y-ig" autocomplete="off" maxlength="100" spellcheck="false" placeholder="@yourgroup" aria-describedby="y-ig-hint">
-          <p class="wl-hint" id="y-ig-hint">Your account name, with or without the @.</p>
+          <p class="wl-hint" id="y-ig-hint">Your account name, with or without the @</p>
         </div>
         <!-- Honeypot: people never see or fill this, bots do -->
         <div class="hp" aria-hidden="true">
@@ -115,13 +116,13 @@
           </div>
           <aside class="br-cal" aria-label="Your events, day by day">
             <div class="br-cal-head">
-              <button type="button" class="br-cal-arrow" id="pt-cal-prev" aria-label="Previous day">&lsaquo;</button>
+              <button type="button" class="br-cal-arrow" id="pt-cal-prev" aria-label="Previous day"></button>
               <h3 id="pt-cal-day" aria-live="polite"></h3>
-              <button type="button" class="br-cal-arrow" id="pt-cal-next" aria-label="Next day">&rsaquo;</button>
+              <button type="button" class="br-cal-arrow" id="pt-cal-next" aria-label="Next day"></button>
             </div>
             <ul class="br-cal-list" id="pt-cal-list"></ul>
-            <p class="br-cal-empty" id="pt-cal-empty">Nothing on this day yet.</p>
-            <p class="wl-hint">Click an event to change it.</p>
+            <p class="br-cal-empty" id="pt-cal-empty">Nothing on this day yet</p>
+            <p class="wl-hint">Click an event to change it</p>
           </aside>
         </div>
         <div class="wl-actions">
@@ -152,7 +153,7 @@
       <!-- ID CHECK (every organiser) -->
       <section class="pt-step" data-step="identity" aria-labelledby="h-identity" hidden>
         <h2 class="wl-step-title" id="h-identity" tabindex="-1">Application sent. Now confirm who you are</h2>
-        <p>Everyone who runs events on WeGoGym confirms their identity once, so people know they are meeting a real person.</p>
+        <p>Everyone who runs events on WeGoGym confirms their identity once, so people know they are meeting a real person</p>
         <p>Stripe, our payment partner, does the check. You photograph a passport, driving licence or ID card and take a selfie. It takes about 2 minutes. WeGoGym never sees or keeps your ID or your selfie, only that you passed.</p>
         <p class="pt-pay-status" id="id-status" aria-live="polite"></p>
         <div class="wl-actions pt-actions-start">

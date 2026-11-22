@@ -58,6 +58,21 @@ events form; hidden business fields (e.g. "Tell us what kind of place it is") sh
   Demo has an Admin page with made-up data (`admin-demo.js`).
 - Admin edit is not saved on the live database yet (see go-live item 5).
 
+## Added on 2026-11-22 (branch and demo)
+
+- Business "Register your facility" intro paragraph removed.
+- Classes: Spaces is a list (Unlimited first, then 1 to 100). Unlimited is stored as `spaces: null`, so the
+  go-live save must decide what `slot_templates.capacity` holds for unlimited (check whether the column
+  allows null). A start before 18:00 shows "Discounting off-peak classes through WeGoGym will help boost
+  attendance" until Discount this class is ticked.
+- One-sentence hints, errors and empty states no longer end in a full stop (both sign-up pages).
+- Both calendars: plain left and right triangles beside the day name (CSS triangles, no circles).
+- Day boxes (Mon to Sun) keep their size when ticked (no tick mark; colour shows the choice).
+- New `/time-field.js` (loaded by both pages, `?v=1`): every time box is a 24-hour HH:MM box. The part being
+  typed in is highlighted yellow; two digits move hours to minutes; backspace in empty minutes goes back to
+  hours; arrows, Tab and ":" switch part; up/down change the value. Its `.value` is "HH:MM" or "".
+- Cache versions now: `business-register.js?v=5`, `business-register.css?v=2`, `partnerships.js?v=20261122a`.
+
 ## User decisions this session
 
 - Discounts are the easy default: a percentage, prefilled at 50%, with an option to type the discounted

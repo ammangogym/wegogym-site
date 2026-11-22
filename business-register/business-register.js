@@ -448,8 +448,8 @@
 
   var COPY = {
     WGG40: "Some details were not accepted. Check this step and try again.",
-    WGG42: "We are not open in that country yet.",
-    WGG64: "You need to be 18 or over to register a business.",
+    WGG42: "We are not open in that country yet",
+    WGG64: "You need to be 18 or over to register a business",
     RL001: "Too many attempts in a short time. Wait an hour and try again.",
     WGG21: "This account cannot change that listing. Log out, then log in with the account that created it.",
     "42501": "This account cannot change that listing. Log out, then log in with the account that created it.",
@@ -457,11 +457,11 @@
     email_exists: "There is already an account with that email. Choose “I already have one” to log in.",
     invalid_credentials: "That email and password do not match. Check both and try again.",
     invalid_grant: "That email and password do not match. Check both and try again.",
-    weak_password: "Choose a longer password, at least 8 characters.",
+    weak_password: "Choose a longer password, at least 8 characters",
     over_email_send_rate_limit: "We have sent several emails to that address already. Wait a few minutes, then try again.",
     over_request_rate_limit: "Too many attempts in a short time. Wait a few minutes and try again.",
     otp_expired: "That code is wrong or has expired. Send a new code and try again.",
-    validation_failed: "Check the email address and try again.",
+    validation_failed: "Check the email address and try again",
     signup_disabled: "We are not taking new accounts on this page yet. Please check back shortly.",
     network: "We could not reach WeGoGym. Check your internet connection and try again.",
     session: "You have been logged out. Log in again to carry on where you left off."
@@ -728,13 +728,13 @@
     var form = $("panel-create");
     clearErrors(form);
     var name = val("su-name"), email = val("su-email"), pw = $("su-password").value, dob = $("su-dob").value;
-    if (!name) fieldError($("su-name"), "Enter your name.");
-    if (!EMAIL.test(email)) fieldError($("su-email"), "Enter an email address like name@example.com.");
-    if (pw.length < 8) fieldError($("su-password"), "Use at least 8 characters.");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) fieldError($("su-dob"), "Enter your date of birth.");
-    else if (ageOn(dob) < 18) fieldError($("su-dob"), "You need to be 18 or over to register a business.");
-    else if (ageOn(dob) > 120) fieldError($("su-dob"), "Check the year of your date of birth.");
-    if (!$("su-terms").checked) fieldError($("su-terms"), "Tick this to continue.");
+    if (!name) fieldError($("su-name"), "Enter your name");
+    if (!EMAIL.test(email)) fieldError($("su-email"), "Enter an email address like name@example.com");
+    if (pw.length < 8) fieldError($("su-password"), "Use at least 8 characters");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) fieldError($("su-dob"), "Enter your date of birth");
+    else if (ageOn(dob) < 18) fieldError($("su-dob"), "You need to be 18 or over to register a business");
+    else if (ageOn(dob) > 120) fieldError($("su-dob"), "Check the year of your date of birth");
+    if (!$("su-terms").checked) fieldError($("su-terms"), "Tick this to continue");
     if (form.querySelector(".br-field-error")) { focusFirstError(form); return; }
 
     // The profile is created by a database trigger, so name and date of birth travel as
@@ -762,8 +762,8 @@
     var form = $("panel-login");
     clearErrors(form);
     var email = val("li-email"), pw = $("li-password").value;
-    if (!EMAIL.test(email)) fieldError($("li-email"), "Enter the email address you registered with.");
-    if (!pw) fieldError($("li-password"), "Enter your password.");
+    if (!EMAIL.test(email)) fieldError($("li-email"), "Enter the email address you registered with");
+    if (!pw) fieldError($("li-password"), "Enter your password");
     if (form.querySelector(".br-field-error")) { focusFirstError(form); return; }
     try {
       var d = await http("/auth/v1/token?grant_type=password",
@@ -787,7 +787,7 @@
     var form = $("cf-form");
     clearErrors(form);
     var code = val("cf-code").replace(/\s/g, "");
-    if (!/^\d{6}$/.test(code)) { fieldError($("cf-code"), "Enter the 6 numbers from the email."); focusFirstError(form); return; }
+    if (!/^\d{6}$/.test(code)) { fieldError($("cf-code"), "Enter the 6 numbers from the email"); focusFirstError(form); return; }
     var d = await http("/auth/v1/verify", {
       method: "POST", auth: false, json: { type: "email", email: state.pendingEmail, token: code }
     });
@@ -804,7 +804,7 @@
     try {
       await http("/auth/v1/resend?redirect_to=" + encodeURIComponent(CONFIG.redirect), { method: "POST", auth: false, json: { type: "signup", email: state.pendingEmail } });
       showAlert("");
-      announce("A new code is on its way.");
+      announce("A new code is on its way");
       $("cf-resend").textContent = "Sent. Check your inbox";
       setTimeout(function () { b.disabled = false; b.textContent = "Send a new code"; }, 60000);
     } catch (err) {
@@ -824,7 +824,7 @@
     }
     selectTab("login");
     showStep("account");
-    announce("Logged out.");
+    announce("Logged out");
   }
 
   // ===== Loading the owner's listing =====
@@ -1010,12 +1010,12 @@
     var region = orNull(regionValue(code));
     var a1 = val("f-addr1"), a2 = orNull(val("f-addr2")), city = val("f-city"), pc = val("f-postcode");
 
-    if (!name) fieldError($("f-name"), "Enter the name of your facility.");
-    if (!c) fieldError($("f-country"), "Choose the country your facility is in.");
-    if (!a1) fieldError($("f-addr1"), "Enter the street address.");
-    if (!city) fieldError($("f-city"), "Enter the town or city.");
+    if (!name) fieldError($("f-name"), "Enter the name of your facility");
+    if (!c) fieldError($("f-country"), "Choose the country your facility is in");
+    if (!a1) fieldError($("f-addr1"), "Enter the street address");
+    if (!city) fieldError($("f-city"), "Enter the town or city");
     if (c && REGIONS[code] && !region) fieldError($("f-region-select"), "Choose the " + REGIONS[code].label.toLowerCase() + ".");
-    if (!pc) fieldError($("f-postcode"), "Enter the postcode or ZIP code, or write “none”.");
+    if (!pc) fieldError($("f-postcode"), "Enter the postcode or ZIP code, or write “none”");
     var gmaps = readMapLink($("f-gmaps").value, GOOGLE_LINK);
     var amaps = readMapLink($("f-amaps").value, APPLE_LINK);
     if (!gmaps.ok) fieldError($("f-gmaps"), "That does not look like a Google Maps link (or it is too long). Use the Share button in Google Maps, copy the link and paste it, or leave this empty.");
@@ -1060,8 +1060,8 @@
     var form = stepEl("business");
     clearErrors(form);
     var legal = val("f-legal"), email = val("f-cemail");
-    if (!legal) fieldError($("f-legal"), "Enter the registered business name, as on your paperwork.");
-    if (!EMAIL.test(email)) fieldError($("f-cemail"), "Enter an email address we can reach you on.");
+    if (!legal) fieldError($("f-legal"), "Enter the registered business name, as on your paperwork");
+    if (!EMAIL.test(email)) fieldError($("f-cemail"), "Enter an email address we can reach you on");
     if (form.querySelector(".br-field-error")) { focusFirstError(form); return; }
     await patchVenue({
       legal_name: legal, company_number: orNull(val("f-company")),
@@ -1144,9 +1144,9 @@
     var category = $("f-category").value;
     var other = val("f-cat-other");
     var desc = val("f-desc");
-    if (!category) fieldError($("f-category"), "Choose the kind of place this is.");
-    else if (category === "other" && other.length < 2) fieldError($("f-cat-other"), "Tell us what kind of place it is, for example “Ninja warrior gym”.");
-    if (!desc) fieldError($("f-desc"), "Write a few sentences about training there.");
+    if (!category) fieldError($("f-category"), "Choose the kind of place this is");
+    else if (category === "other" && other.length < 2) fieldError($("f-cat-other"), "Tell us what kind of place it is, for example “Ninja warrior gym”");
+    if (!desc) fieldError($("f-desc"), "Write a few sentences about training there");
     var h = readHours();
     if (h.bad) fieldError($("f-hours-group"), "Add both an opening and a closing time for " + h.bad + ", or leave both empty if you are closed.", h.badEl);
     if (form.querySelector(".br-field-error")) { focusFirstError(form); return; }
@@ -1241,7 +1241,7 @@
     group.querySelectorAll(".br-field-error").forEach(function (p) { p.remove(); });
     input.removeAttribute("aria-invalid");
     var text = input.value.replace(/\s+/g, " ").trim();
-    if (text.length < 2) { fieldError(input, "Type what it is, for example “Golf simulator”."); input.focus(); return; }
+    if (text.length < 2) { fieldError(input, "Type what it is, for example “Golf simulator”"); input.focus(); return; }
     var lower = text.toLowerCase();
     // Already on the list: tick that one rather than adding a copy in the owner's words.
     var same = Array.prototype.find.call($("f-amenities").querySelectorAll("li:not(.br-amen-sep)"),
@@ -1385,7 +1385,7 @@
     }
     status.textContent = "";
     if (failed.length) showAlert("Some photos were not added. " + failed.join(". ") + ".");
-    else announce(files.length === 1 ? "Photo added." : files.length + " photos added.");
+    else announce(files.length === 1 ? "Photo added" : files.length + " photos added.");
   }
 
   // Exactly one cover: clear the old one first, so a failure in between leaves none, not two.
@@ -1396,7 +1396,7 @@
       { method: "PATCH", json: { is_cover: true }, headers: { Prefer: "return=representation" } });
     if (!rows || !rows.length) throw new AppError(403, "42501");
     state.photos.forEach(function (p) { p.is_cover = p.id === photoId; });
-    announce("Cover photo changed.");
+    announce("Cover photo changed");
   }
 
   async function removePhoto(photo) {
@@ -1407,14 +1407,14 @@
     // The listing no longer shows it; tidying the file is best effort.
     http("/storage/v1/object/venue-photos", { method: "DELETE", json: { prefixes: [photo.storage_path] } }).catch(function () {});
     if (photo.is_cover && state.photos.length) await setCover(state.photos[0].id);
-    announce("Photo removed.");
+    announce("Photo removed");
   }
 
   async function finishPhotos() {
     var form = stepEl("photos");
     clearErrors(form);
     if (!state.photos.length) {
-      showAlert("Add at least one photo so people can see the place.");
+      showAlert("Add at least one photo so people can see the place");
       $("f-photo-input").focus();
       return;
     }
@@ -1502,21 +1502,28 @@
   }
   var classes = [], classSeq = 0, editingId = null, calDay = 1, edDisc = null;
   function edDays() { return Array.prototype.slice.call($("pr-ed-days").querySelectorAll("input")); }
+  // Shown for a class that starts before 6pm and has no discount ticked yet.
+  function showOffpeak() {
+    var st = $("pr-ed-start").value;
+    $("pr-ed-offpeak").hidden = !(st && st < "18:00" && !(edDisc && edDisc.on.checked));
+  }
   function resetEditor() {
     editingId = null;
     $("pr-ed-name").value = ""; $("pr-ed-start").value = ""; $("pr-ed-end").value = "";
     $("pr-ed-spaces").value = ""; $("pr-ed-price").value = "";
     edDays().forEach(function (b) { b.checked = false; });
     edDisc.set(null);
+    showOffpeak();
     $("pr-ed-title").textContent = "Add a class"; $("pr-ed-save").textContent = "Add to calendar";
     $("pr-ed-cancel").hidden = true; $("pr-ed-del").hidden = true; $("pr-ed-err").hidden = true;
   }
   function loadClass(c) {
     editingId = c.id;
     $("pr-ed-name").value = c.name; $("pr-ed-start").value = c.start; $("pr-ed-end").value = c.end;
-    $("pr-ed-spaces").value = String(c.spaces); $("pr-ed-price").value = (c.price / 100).toFixed(2);
+    $("pr-ed-spaces").value = c.spaces ? String(c.spaces) : ""; $("pr-ed-price").value = (c.price / 100).toFixed(2);
     edDays().forEach(function (b) { b.checked = c.days.indexOf(Number(b.value)) >= 0; });
     edDisc.set(c.discount);
+    showOffpeak();
     $("pr-ed-title").textContent = "Change " + c.name + (c.days.length > 1 ? " (every " + c.days.map(function (n) { return WEEK[n - 1][1]; }).join(", ") + ")" : "");
     $("pr-ed-save").textContent = "Save changes";
     $("pr-ed-cancel").hidden = false; $("pr-ed-del").hidden = false; $("pr-ed-err").hidden = true;
@@ -1525,14 +1532,13 @@
   }
   function saveClass() {
     var c = { name: $("pr-ed-name").value.trim(), start: $("pr-ed-start").value, end: $("pr-ed-end").value,
-      spaces: Number($("pr-ed-spaces").value), price: penceFrom($("pr-ed-price").value),
+      spaces: $("pr-ed-spaces").value ? Number($("pr-ed-spaces").value) : null, price: penceFrom($("pr-ed-price").value),
       days: edDays().filter(function (b) { return b.checked; }).map(function (b) { return Number(b.value); }),
       discount: edDisc.read() };
-    var bad = !c.name ? "Type the kind of class, for example Boxing."
-      : !c.days.length ? "Tick at least one day."
-      : !c.start || !c.end || c.end <= c.start ? "Choose a start time and an end time after it."
-      : !(c.spaces >= 1 && c.spaces <= 1000 && Math.floor(c.spaces) === c.spaces) ? "Type how many spaces there are."
-      : c.price === null ? "Type a price between £1.00 and £1,000.00, for example 15."
+    var bad = !c.name ? "Type the kind of class, for example Boxing"
+      : !c.days.length ? "Tick at least one day"
+      : !c.start || !c.end || c.end <= c.start ? "Choose a start time and an end time after it"
+      : c.price === null ? "Type a price between £1.00 and £1,000.00, for example 15"
       : c.discount && !(c.discount.percent || (c.discount.price && c.discount.price < c.price)) ? "Type a discount between 1 and 99%, or a discounted price lower than " + pounds(c.price) + "."
       : null;
     if (bad) { $("pr-ed-err").textContent = bad; $("pr-ed-err").hidden = false; return; }
@@ -1553,7 +1559,7 @@
       var off = c.discount ? (c.discount.percent ? c.discount.percent + "% off" : pounds(c.discount.price) + " at this time") : "";
       var b = el("button", { type: "button", class: "br-cal-item" + (c.id === editingId ? " is-editing" : "") }, [
         el("b", { text: c.start + " to " + c.end + "  " + c.name }),
-        el("span", { text: c.spaces + " spaces, " + pounds(c.price) }),
+        el("span", { text: (c.spaces ? c.spaces + " spaces" : "Unlimited spaces") + ", " + pounds(c.price) }),
         off ? el("span", { class: "br-cal-off", text: off }) : ""
       ]);
       b.addEventListener("click", function () { loadClass(c); });
@@ -1564,13 +1570,19 @@
     $("pr-class-total").textContent = week ? week + (week === 1 ? " class" : " classes") + " a week in total." : "";
   }
   function initPlanner() {
+    // Spaces: Unlimited first, then 1 to 100
+    var sp = $("pr-ed-spaces");
+    sp.appendChild(el("option", { value: "", text: "Unlimited" }));
+    for (var n = 1; n <= 100; n++) sp.appendChild(el("option", { value: String(n), text: String(n) }));
     WEEK.forEach(function (d) {
       var id = "pr-ed-d" + d[0], box = el("input", { type: "checkbox", id: id, value: String(d[0]) });
-      $("pr-ed-days").appendChild(el("label", { class: "chip", for: id }, [box, el("span", { text: d[1] })]));
+      $("pr-ed-days").appendChild(el("label", { class: "chip chip-day", for: id }, [box, el("span", { text: d[1] })]));
     });
     edDisc = discountControl();
     $("pr-ed-disc").appendChild(edDisc.el);
     $("pr-ed-save").addEventListener("click", saveClass);
+    ["input", "change"].forEach(function (t) { $("pr-ed-start").addEventListener(t, showOffpeak); });
+    edDisc.on.addEventListener("change", showOffpeak);
     // Enter in the class form adds the class rather than sending the whole step.
     $("pr-editor").addEventListener("keydown", function (e) {
       if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); saveClass(); }
@@ -1578,7 +1590,7 @@
     $("pr-ed-cancel").addEventListener("click", function () { resetEditor(); renderCal(); });
     $("pr-ed-del").addEventListener("click", function () {
       classes = classes.filter(function (x) { return x.id !== editingId; });
-      resetEditor(); renderCal(); announce("Class deleted.");
+      resetEditor(); renderCal(); announce("Class deleted");
     });
     $("pr-cal-prev").addEventListener("click", function () { calDay = calDay === 1 ? 7 : calDay - 1; renderCal(); });
     $("pr-cal-next").addEventListener("click", function () { calDay = calDay === 7 ? 1 : calDay + 1; renderCal(); });
@@ -1595,7 +1607,7 @@
   function quietExample() {
     var base = penceFrom($("pr-day1").value) || 1000, what = "day pass";
     var to = byPrice ? penceFrom($("pr-to").value) : null, off = byPrice ? null : pctFrom($("pr-pct").value);
-    if (byPrice ? !to : !off) { $("pr-qexample").textContent = byPrice ? "Type the price members pay at quieter times." : "Type a percentage between 1 and 99."; return; }
+    if (byPrice ? !to : !off) { $("pr-qexample").textContent = byPrice ? "Type the price members pay at quieter times" : "Type a percentage between 1 and 99"; return; }
     if (byPrice && to >= base) { $("pr-qexample").textContent = "This is not lower than your normal " + pounds(base) + " " + what + "."; return; }
     $("pr-qexample").textContent = ""; // only problems are shown here
   }
@@ -1606,7 +1618,7 @@
       var id = "pr-qd-" + d[0], box = el("input", { type: "checkbox", id: id, value: String(d[0]) });
       if (d[0] <= 5) box.checked = true;
       box.addEventListener("change", quietExample);
-      $("pr-qdays").appendChild(el("label", { class: "chip", for: id }, [box, el("span", { text: d[1] })]));
+      $("pr-qdays").appendChild(el("label", { class: "chip chip-day", for: id }, [box, el("span", { text: d[1] })]));
     });
     initPlanner();
     document.querySelectorAll('input[name="pr-mode"]').forEach(function (r) {
@@ -1643,12 +1655,12 @@
   }
   async function savePrices() {
     var p = readPrices(), bad = null;
-    if (p.mode === "day_pass" && p.passes.some(function (x) { return x.price === null; })) bad = "Enter each price between £1.00 and £1,000.00, for example 12.50.";
-    if (p.mode === "time_slot" && !p.classes.length) bad = "Add at least one class to the calendar.";
+    if (p.mode === "day_pass" && p.passes.some(function (x) { return x.price === null; })) bad = "Enter each price between £1.00 and £1,000.00, for example 12.50";
+    if (p.mode === "time_slot" && !p.classes.length) bad = "Add at least one class to the calendar";
     if (p.quiet && !(p.quiet.percent || p.quiet.price)) bad = byPrice
-      ? "Type the price members pay at quieter times, for example 8.00." : "Type how much off, as a percentage between 1 and 99.";
+      ? "Type the price members pay at quieter times, for example 8.00" : "Type how much off, as a percentage between 1 and 99";
     if (p.quiet && (!p.quiet.days.length || !p.quiet.from || !p.quiet.to || p.quiet.to <= p.quiet.from))
-      bad = "For the quieter-times discount, tick at least one day and choose an end time after the start.";
+      bad = "For the quieter-times discount, tick at least one day and choose an end time after the start";
     if (bad) { showAlert(bad); return; }
     state.prices = p;
     showAlert("");
@@ -1666,11 +1678,11 @@
   async function addOperator() {
     var name = $("tm-name").value.trim(), email = $("tm-email").value.trim().toLowerCase();
     var dob = $("tm-dob").value, pw = $("tm-pw").value, pw2 = $("tm-pw2").value;
-    if (!name) { showAlert("Enter their name."); $("tm-name").focus(); return; }
-    if (!EMAIL.test(email)) { showAlert("Enter their email address, like name@example.com."); $("tm-email").focus(); return; }
+    if (!name) { showAlert("Enter their name"); $("tm-name").focus(); return; }
+    if (!EMAIL.test(email)) { showAlert("Enter their email address, like name@example.com"); $("tm-email").focus(); return; }
     if (!dob || ageOn(dob) < 18) { showAlert("They need to be 18 or over. Check their date of birth."); $("tm-dob").focus(); return; }
     if (pw.length < 8) { showAlert(COPY.weak_password); $("tm-pw").focus(); return; }
-    if (pw !== pw2) { showAlert("The two passwords do not match."); $("tm-pw2").focus(); return; }
+    if (pw !== pw2) { showAlert("The two passwords do not match"); $("tm-pw2").focus(); return; }
     await fn("create-venue-operator", { venue_id: state.venue.id, full_name: name, email: email, password: pw, date_of_birth: dob });
     state.team = (state.team || []).concat([{ name: name, email: email }]);
     ["tm-name", "tm-email", "tm-dob", "tm-pw", "tm-pw2"].forEach(function (id) { $(id).value = ""; });
@@ -1701,7 +1713,7 @@
   })();
 
   function payoutWords(st) {
-    if (!st || !st.started) return "Not set up yet.";
+    if (!st || !st.started) return "Not set up yet";
     if (!st.details_submitted && stripeBack === "refresh") return "That Stripe page expired. Continue with Stripe to pick up where you left off.";
     if (st.payouts_enabled && st.charges_enabled) return "Done. Stripe has your details and payouts are switched on.";
     if (st.details_submitted) return "Stripe has your details and is checking them. This can take a day or two. You do not need to do anything unless Stripe emails you.";
@@ -1831,7 +1843,7 @@
     $("f-hours-copy").addEventListener("click", function () {
       var o = $("hours-mon-open").value, c = $("hours-mon-close").value;
       DAYS.forEach(function (d) { $("hours-" + d[0] + "-open").value = o; $("hours-" + d[0] + "-close").value = c; });
-      announce("Monday's hours copied to every day.");
+      announce("Monday's hours copied to every day");
     });
     $("f-amen-search").addEventListener("input", updateAmenities);
     $("f-amen-search").addEventListener("keydown", function (e) { if (e.key === "Enter") e.preventDefault(); });
@@ -1852,7 +1864,7 @@
       var files = Array.prototype.slice.call(e.target.files || []);
       e.target.value = "";
       if (!files.length) return;
-      if (running) { showAlert("Wait for the last change to finish, then add those photos again."); return; }
+      if (running) { showAlert("Wait for the last change to finish, then add those photos again"); return; }
       running = true; showAlert("");
       try { await addPhotos(files); }
       catch (err) { handleError(err); }

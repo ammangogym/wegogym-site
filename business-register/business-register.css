@@ -20,7 +20,7 @@
 @media (min-width: 560px) { .br-row { grid-template-columns: 2fr 1fr; } }
 
 .wl input[type="password"], .wl input[type="date"], .wl input[type="tel"],
-.wl input[type="time"], .wl textarea {
+.wl input[type="time"], .wl input.wgg-time, .wl textarea {
   width: 100%; font: inherit; font-size: 1rem; padding: 12px 14px;
   border: 1px solid #8a8a86; border-radius: var(--radius-sm); background: var(--paper); color: var(--ink);
 }
@@ -53,7 +53,7 @@
 .br-day { display: grid; grid-template-columns: 6.5rem 1fr auto 1fr; gap: 8px; align-items: center; }
 .br-day > span:first-child { font-weight: 600; font-size: .95rem; }
 .br-day .br-to { color: var(--muted); font-size: .9rem; }
-.br-day input[type="time"] { padding: 8px 10px; min-width: 0; }
+.br-day input[type="time"], .br-day input.wgg-time { padding: 8px 10px; min-width: 0; }
 @media (max-width: 420px) { .br-day { grid-template-columns: 1fr 1fr; } .br-day > span:first-child { grid-column: 1 / -1; } .br-day .br-to { display: none; } }
 .br-small { padding: 7px 16px; font-size: .875rem; }
 
@@ -158,8 +158,15 @@
 .br-cal { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); padding: 12px; }
 .br-cal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 10px; }
 .br-cal-head h3 { margin: 0; font-size: 1.05rem; text-align: center; flex: 1; }
-.br-cal-arrow { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--paper); font-size: 1.3rem; line-height: 1; cursor: pointer; }
-.br-cal-arrow:hover { border-color: var(--ink); }
+/* A plain triangle either side of the day name, no circle */
+.br-cal-arrow { position: relative; width: 36px; height: 36px; border: 0; background: transparent; cursor: pointer; flex: none; }
+.br-cal-arrow::before { content: ""; position: absolute; top: 50%; left: 50%; border-style: solid; border-color: transparent; transform: translate(-50%, -50%); }
+#pr-cal-prev::before, #pt-cal-prev::before { border-width: 8px 12px 8px 0; border-right-color: var(--ink); }
+#pr-cal-next::before, #pt-cal-next::before { border-width: 8px 0 8px 12px; border-left-color: var(--ink); }
+.br-cal-arrow:hover::before { opacity: .6; }
+.br-cal-arrow:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; border-radius: 6px; }
+/* Day boxes keep their size when ticked: the colour shows the choice, no tick mark is added */
+.chip.chip-day input:checked + span::before { content: none; }
 .br-cal-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .br-cal-item { display: block; width: 100%; text-align: left; font: inherit; color: var(--ink); background: var(--soft); border: 1px solid transparent; border-left: 4px solid var(--ink); border-radius: var(--radius-sm); padding: 8px 10px; cursor: pointer; }
 .br-cal-item:hover, .br-cal-item.is-editing { border-color: var(--ink); }
@@ -167,3 +174,7 @@
 .br-cal-item span { display: block; font-size: .875rem; color: var(--muted); }
 .br-cal-item .br-cal-off { color: var(--ink); font-weight: 600; }
 .br-cal-empty { color: var(--muted); font-size: .9rem; margin: 4px 0 8px; }
+
+/* Time boxes (see /time-field.js): the part being typed into is highlighted in the brand yellow */
+.wgg-time { font-variant-numeric: tabular-nums; caret-color: transparent; }
+.wgg-time::selection { background: #ffd401; color: #111; }
