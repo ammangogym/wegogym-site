@@ -28,9 +28,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/waitlist/waitlist.css">
-  <link rel="stylesheet" href="/business-register/business-register.css?v=2">
+  <link rel="stylesheet" href="/business-register/business-register.css?v=3">
   <script src="/time-field.js?v=1" defer></script>
-  <script src="/business-register/business-register.js?v=5" defer></script>
+  <script src="/business-register/business-register.js?v=6" defer></script>
 </head>
 <body class="page-waitlist page-br">
 
@@ -334,7 +334,7 @@
               <div class="chips" id="pr-ed-days"></div>
             </fieldset>
             <div class="br-row br-row-even">
-              <div class="br-field"><label for="pr-ed-start">Starts</label><input type="time" id="pr-ed-start"></div>
+              <div class="br-field"><label for="pr-ed-start">Starts</label><input type="time" id="pr-ed-start"><p class="wl-hint" id="pr-ed-offpeak" hidden>Discounting off-peak classes through WeGoGym will help boost attendance</p></div>
               <div class="br-field"><label for="pr-ed-end">Ends</label><input type="time" id="pr-ed-end"></div>
             </div>
             <div class="br-row br-row-even">
@@ -342,7 +342,6 @@
               <div class="br-field"><label for="pr-ed-price">Price</label><div class="br-money"><span aria-hidden="true">&pound;</span><input type="text" id="pr-ed-price" inputmode="decimal" autocomplete="off" maxlength="9"></div></div>
             </div>
             <div id="pr-ed-disc"></div>
-            <p class="br-nudge br-nudge-small" id="pr-ed-offpeak" hidden>Discounting off-peak classes through WeGoGym will help boost attendance</p>
             <p class="br-field-error" id="pr-ed-err" role="alert" hidden></p>
             <div class="br-editor-actions">
               <button type="button" class="btn btn-primary br-small" id="pr-ed-save">Add to calendar</button>
@@ -370,24 +369,9 @@
           <label class="chip" for="pr-quiet"><input type="checkbox" id="pr-quiet"><span>Add a quieter-times discount</span></label>
         </div>
         <div id="pr-quiet-more" hidden>
-          <div class="br-field" id="pr-pct-wrap">
-            <label for="pr-pct">Discount</label>
-            <div class="br-pct"><input type="text" id="pr-pct" inputmode="numeric" autocomplete="off" maxlength="2" value="50"><span aria-hidden="true">% off</span></div>
-          </div>
-          <div class="br-field" id="pr-to-wrap" hidden>
-            <label for="pr-to">Price during quieter times</label>
-            <div class="br-money"><span aria-hidden="true">&pound;</span><input type="text" id="pr-to" inputmode="decimal" autocomplete="off" maxlength="9"></div>
-          </div>
-          <p><button type="button" class="br-switch" id="pr-switch">Type the discounted price instead</button></p>
-          <fieldset class="br-field">
-            <legend>On which days?</legend>
-            <div class="chips" id="pr-qdays"></div>
-          </fieldset>
-          <div class="br-row br-row-even">
-            <div class="br-field"><label for="pr-qfrom">From</label><input type="time" id="pr-qfrom" value="10:00"></div>
-            <div class="br-field"><label for="pr-qto">Until</label><input type="time" id="pr-qto" value="16:00"></div>
-          </div>
-          <p class="wl-hint" id="pr-qexample" aria-live="polite"></p>
+          <p class="wl-hint">Quiet times can differ from day to day. Add a separate discount for each set of days and times.</p>
+          <div id="pr-quiet-list"></div>
+          <button type="button" class="btn btn-secondary br-small" id="pr-quiet-add">Add a discount for other days or times</button>
         </div>
       </section>
 
@@ -404,18 +388,9 @@
       <p class="wl-hint br-hint-top">Optional. You can add or remove these later from your business dashboard.</p>
       <ul class="br-team" id="tm-list" hidden></ul>
       <div class="br-field">
-        <label for="tm-name">Their name</label>
-        <input type="text" id="tm-name" maxlength="120" autocomplete="off">
-      </div>
-      <div class="br-field">
         <label for="tm-email">Their email</label>
         <input type="email" id="tm-email" maxlength="254" autocomplete="off" inputmode="email" aria-describedby="tm-email-hint">
-        <p class="wl-hint" id="tm-email-hint">This is what they log in with. It cannot already have a WeGoGym account.</p>
-      </div>
-      <div class="br-field">
-        <label for="tm-dob">Their date of birth</label>
-        <input type="date" id="tm-dob" aria-describedby="tm-dob-hint">
-        <p class="wl-hint" id="tm-dob-hint">They need to be 18 or over</p>
+        <p class="wl-hint" id="tm-email-hint">This is what they log in with and where they receive notifications. It cannot already have a WeGoGym account.</p>
       </div>
       <div class="br-field">
         <label for="tm-pw">Password for them</label>

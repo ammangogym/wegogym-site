@@ -73,6 +73,23 @@ events form; hidden business fields (e.g. "Tell us what kind of place it is") sh
   hours; arrows, Tab and ":" switch part; up/down change the value. Its `.value` is "HH:MM" or "".
 - Cache versions now: `business-register.js?v=5`, `business-register.css?v=2`, `partnerships.js?v=20261122a`.
 
+## Added on 2026-11-22 (second round)
+
+- **Day-pass quieter-times discounts:** now a list. Each discount has its own amount (% or typed price),
+  days and from/until times; "Add a discount for other days or times" adds another (up to 8), each can be
+  removed. Two discounts that cover the same day at overlapping times are refused with a message.
+  `state.prices.quiet` is now an array of `{ percent, price, days, from, to }` (it used to be one object).
+  Go-live save: one `promotions` row per discount.
+- **Off-peak line:** small line under the Starts box for any class starting before 18:00 (stays when the
+  class is discounted).
+- **Spaces:** starts blank, then Unlimited, then 1 to 100; must be chosen before a class is added.
+- **Front-desk logins:** name and date of birth removed. The page now sends only `venue_id`, `email`,
+  `password` to `create-venue-operator`. **That function (and the profile trigger from migration 0034 that
+  refuses an email sign-up without a date of birth) still require full_name and date_of_birth, so this step
+  will fail on the live site until the server is changed.** Also needed: the operator's email must receive
+  booking alert emails. Both are server work, not done.
+- Cache versions: `business-register.js?v=6`, `business-register.css?v=3`.
+
 ## User decisions this session
 
 - Discounts are the easy default: a percentage, prefilled at 50%, with an option to type the discounted

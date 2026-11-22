@@ -1502,10 +1502,10 @@
   }
   var classes = [], classSeq = 0, editingId = null, calDay = 1, edDisc = null;
   function edDays() { return Array.prototype.slice.call($("pr-ed-days").querySelectorAll("input")); }
-  // Shown for a class that starts before 6pm and has no discount ticked yet.
+  // A small line under Starts for any class that starts before 6pm
   function showOffpeak() {
     var st = $("pr-ed-start").value;
-    $("pr-ed-offpeak").hidden = !(st && st < "18:00" && !(edDisc && edDisc.on.checked));
+    $("pr-ed-offpeak").hidden = !(st && st < "18:00");
   }
   function resetEditor() {
     editingId = null;
@@ -1520,7 +1520,7 @@
   function loadClass(c) {
     editingId = c.id;
     $("pr-ed-name").value = c.name; $("pr-ed-start").value = c.start; $("pr-ed-end").value = c.end;
-    $("pr-ed-spaces").value = c.spaces ? String(c.spaces) : ""; $("pr-ed-price").value = (c.price / 100).toFixed(2);
+    $("pr-ed-spaces").value = c.spaces ? String(c.spaces) : "unlimited"; $("pr-ed-price").value = (c.price / 100).toFixed(2);
     edDays().forEach(function (b) { b.checked = c.days.indexOf(Number(b.value)) >= 0; });
     edDisc.set(c.discount);
     showOffpeak();
@@ -1532,12 +1532,13 @@
   }
   function saveClass() {
     var c = { name: $("pr-ed-name").value.trim(), start: $("pr-ed-start").value, end: $("pr-ed-end").value,
-      spaces: $("pr-ed-spaces").value ? Number($("pr-ed-spaces").value) : null, price: penceFrom($("pr-ed-price").value),
+      spaces: $("pr-ed-spaces").value === "unlimited" ? null : Number($("pr-ed-spaces").value), price: penceFrom($("pr-ed-price").value),
       days: edDays().filter(function (b) { return b.checked; }).map(function (b) { return Number(b.value); }),
       discount: edDisc.read() };
     var bad = !c.name ? "Type the kind of class, for example Boxing"
       : !c.days.length ? "Tick at least one day"
       : !c.start || !c.end || c.end <= c.start ? "Choose a start time and an end time after it"
+      : !$("pr-ed-spaces").value ? "Choose how many spaces there are"
       : c.price === null ? "Type a price between £1.00 and £1,000.00, for example 15"
       : c.discount && !(c.discount.percent || (c.discount.price && c.discount.price < c.price)) ? "Type a discount between 1 and 99%, or a discounted price lower than " + pounds(c.price) + "."
       : null;
@@ -1570,9 +1571,10 @@
     $("pr-class-total").textContent = week ? week + (week === 1 ? " class" : " classes") + " a week in total." : "";
   }
   function initPlanner() {
-    // Spaces: Unlimited first, then 1 to 100
+    // Spaces: blank to start, then Unlimited, then 1 to 100
     var sp = $("pr-ed-spaces");
-    sp.appendChild(el("option", { value: "", text: "Unlimited" }));
+    sp.appendChild(el("option", { value: "", text: "" }));
+    sp.appendChild(el("option", { value: "unlimited", text: "Unlimited" }));
     for (var n = 1; n <= 100; n++) sp.appendChild(el("option", { value: String(n), text: String(n) }));
     WEEK.forEach(function (d) {
       var id = "pr-ed-d" + d[0], box = el("input", { type: "checkbox", id: id, value: String(d[0]) });
@@ -1582,7 +1584,6 @@
     $("pr-ed-disc").appendChild(edDisc.el);
     $("pr-ed-save").addEventListener("click", saveClass);
     ["input", "change"].forEach(function (t) { $("pr-ed-start").addEventListener(t, showOffpeak); });
-    edDisc.on.addEventListener("change", showOffpeak);
     // Enter in the class form adds the class rather than sending the whole step.
     $("pr-editor").addEventListener("keydown", function (e) {
       if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); saveClass(); }
@@ -1598,44 +1599,97 @@
     renderCal();
   }
   function mode() { return document.querySelector('input[name="pr-mode"]:checked').value; }
-  var byPrice = false; // false: a percentage off (the default); true: the discounted price itself
   function pctFrom(text) {
     var m = /^\s*(\d{1,2})\s*%?\s*$/.exec(String(text || ""));
     var n = m ? parseInt(m[1], 10) : 0;
     return n >= 1 && n <= 99 ? n : null;
   }
+  // Quieter times: one or more discounts, each with its own days, times and amount
+  var quietCards = [];
+  function quietCard() {
+    var pct = el("input", { type: "text", inputmode: "numeric", autocomplete: "off", maxlength: "2", value: "50" });
+    var price = moneyField("Price during these times");
+    var pctWrap = plainField("Discount", el("div", { class: "br-pct" }, [pct, el("span", { "aria-hidden": "true", text: "% off" })]));
+    price.el.hidden = true;
+    var sw = el("button", { type: "button", class: "br-switch", text: "Type the discounted price instead" });
+    var boxes = [], chips = el("div", { class: "chips" });
+    WEEK.forEach(function (d) {
+      var id = "pr-x" + (++fieldSeq), box = el("input", { type: "checkbox", id: id, value: String(d[0]) });
+      box.addEventListener("change", quietExample);
+      boxes.push(box);
+      chips.appendChild(el("label", { class: "chip chip-day", for: id }, [box, el("span", { text: d[1] })]));
+    });
+    var from = el("input", { type: "time", value: "10:00" }), to = el("input", { type: "time", value: "16:00" });
+    var note = el("p", { class: "wl-hint", "aria-live": "polite" });
+    var remove = el("button", { type: "button", class: "btn btn-ghost br-small", text: "Remove this discount" });
+    var title = el("h4", { class: "br-qtitle" });
+    var days = el("fieldset", { class: "br-field" }, [el("legend", { text: "On which days?" }), chips]);
+    var card = el("div", { class: "br-qcard" }, [title, pctWrap, price.el, el("p", {}, [sw]), days,
+      el("div", { class: "br-row br-row-even" }, [plainField("From", from), plainField("Until", to)]), note, remove]);
+    var c = { el: card, byPrice: false, boxes: boxes, title: title, remove: remove };
+    c.read = function () {
+      return { percent: c.byPrice ? null : pctFrom(pct.value), price: c.byPrice ? penceFrom(price.input.value) : null,
+        days: WEEK.filter(function (d, i) { return boxes[i].checked; }).map(function (d) { return d[0]; }), from: from.value, to: to.value };
+    };
+    c.check = function (q) { // the first thing wrong with this discount, or ""
+      var base = penceFrom($("pr-day1").value) || 1000;
+      if (!(q.percent || q.price)) return c.byPrice ? "Type the price members pay at these times, for example 8.00" : "Type how much off, as a percentage between 1 and 99";
+      if (q.price && q.price >= base) return "This is not lower than your normal " + pounds(base) + " day pass";
+      if (!q.days.length) return "Tick at least one day";
+      if (!q.from || !q.to || q.to <= q.from) return "Choose a start time and an end time after it";
+      return "";
+    };
+    c.note = note;
+    sw.addEventListener("click", function () {
+      c.byPrice = !c.byPrice; pctWrap.hidden = c.byPrice; price.el.hidden = !c.byPrice;
+      sw.textContent = c.byPrice ? "Type a percentage instead" : "Type the discounted price instead";
+      (c.byPrice ? price.input : pct).focus(); quietExample();
+    });
+    remove.addEventListener("click", function () {
+      quietCards = quietCards.filter(function (x) { return x !== c; }); card.remove(); layoutQuiet(); quietExample();
+    });
+    [pct, price.input, from, to].forEach(function (i) { ["input", "change"].forEach(function (t) { i.addEventListener(t, quietExample); }); });
+    return c;
+  }
+  function layoutQuiet() { // titles and Remove buttons only matter once there is more than one
+    var many = quietCards.length > 1;
+    quietCards.forEach(function (c, i) { c.title.textContent = many ? "Discount " + (i + 1) : ""; c.title.hidden = !many; c.remove.hidden = !many; });
+    $("pr-quiet-add").hidden = quietCards.length >= 8;
+  }
+  function addQuiet(weekdays) {
+    var c = quietCard();
+    if (weekdays) c.boxes.forEach(function (b, i) { b.checked = i < 5; });
+    quietCards.push(c); $("pr-quiet-list").appendChild(c.el); layoutQuiet();
+    return c;
+  }
+  // Only problems are shown, under the discount they belong to
   function quietExample() {
-    var base = penceFrom($("pr-day1").value) || 1000, what = "day pass";
-    var to = byPrice ? penceFrom($("pr-to").value) : null, off = byPrice ? null : pctFrom($("pr-pct").value);
-    if (byPrice ? !to : !off) { $("pr-qexample").textContent = byPrice ? "Type the price members pay at quieter times" : "Type a percentage between 1 and 99"; return; }
-    if (byPrice && to >= base) { $("pr-qexample").textContent = "This is not lower than your normal " + pounds(base) + " " + what + "."; return; }
-    $("pr-qexample").textContent = ""; // only problems are shown here
+    quietCards.forEach(function (c) { c.note.textContent = c.check(c.read()); });
+  }
+  // Two discounts that cover the same day at overlapping times
+  function quietOverlap(rules) {
+    for (var i = 0; i < rules.length; i++) for (var j = i + 1; j < rules.length; j++) {
+      var a = rules[i], b = rules[j];
+      if (a.from < b.to && b.from < a.to) {
+        var shared = a.days.filter(function (d) { return b.days.indexOf(d) >= 0; });
+        if (shared.length) return "Discounts " + (i + 1) + " and " + (j + 1) + " overlap on " + WEEK[shared[0] - 1][2] + ". Change a day or a time so each time has one discount.";
+      }
+    }
+    return "";
   }
   function initPrices() {
     if (pricesReady) return;
     pricesReady = true;
-    WEEK.forEach(function (d) {
-      var id = "pr-qd-" + d[0], box = el("input", { type: "checkbox", id: id, value: String(d[0]) });
-      if (d[0] <= 5) box.checked = true;
-      box.addEventListener("change", quietExample);
-      $("pr-qdays").appendChild(el("label", { class: "chip chip-day", for: id }, [box, el("span", { text: d[1] })]));
-    });
     initPlanner();
     document.querySelectorAll('input[name="pr-mode"]').forEach(function (r) {
       r.addEventListener("change", function () { var day = mode() === "day_pass";
         $("pr-day").hidden = !day; $("pr-slot").hidden = day; $("pr-quiet-box").hidden = !day; quietExample(); });
     });
     $("pr-multi-add").addEventListener("click", addMulti);
+    addQuiet(true);
     $("pr-quiet").addEventListener("change", function () { $("pr-quiet-more").hidden = !$("pr-quiet").checked; quietExample(); });
-    ["pr-day1", "pr-qfrom", "pr-qto"].forEach(function (id) { $(id).addEventListener("input", quietExample); });
-    ["pr-pct", "pr-to"].forEach(function (id) { $(id).addEventListener("input", quietExample); });
-    $("pr-switch").addEventListener("click", function () {
-      byPrice = !byPrice;
-      $("pr-pct-wrap").hidden = byPrice; $("pr-to-wrap").hidden = !byPrice;
-      $("pr-switch").textContent = byPrice ? "Type a percentage instead" : "Type the discounted price instead";
-      $(byPrice ? "pr-to" : "pr-pct").focus();
-      quietExample();
-    });
+    $("pr-quiet-add").addEventListener("click", function () { var c = addQuiet(false); c.boxes[0].focus(); });
+    $("pr-day1").addEventListener("input", quietExample);
     quietExample();
   }
   function readPrices() {
@@ -1647,9 +1701,7 @@
       out.classes = classes.slice();
     }
     if (out.mode === "day_pass" && $("pr-quiet").checked) {
-      out.quiet = { percent: byPrice ? null : pctFrom($("pr-pct").value), price: byPrice ? penceFrom($("pr-to").value) : null,
-        days: WEEK.filter(function (d) { return $("pr-qd-" + d[0]).checked; }).map(function (d) { return d[0]; }),
-        from: $("pr-qfrom").value, to: $("pr-qto").value };
+      out.quiet = quietCards.map(function (c) { return c.read(); }); // a list: one entry per discount
     }
     return out;
   }
@@ -1657,10 +1709,13 @@
     var p = readPrices(), bad = null;
     if (p.mode === "day_pass" && p.passes.some(function (x) { return x.price === null; })) bad = "Enter each price between £1.00 and £1,000.00, for example 12.50";
     if (p.mode === "time_slot" && !p.classes.length) bad = "Add at least one class to the calendar";
-    if (p.quiet && !(p.quiet.percent || p.quiet.price)) bad = byPrice
-      ? "Type the price members pay at quieter times, for example 8.00" : "Type how much off, as a percentage between 1 and 99";
-    if (p.quiet && (!p.quiet.days.length || !p.quiet.from || !p.quiet.to || p.quiet.to <= p.quiet.from))
-      bad = "For the quieter-times discount, tick at least one day and choose an end time after the start";
+    if (p.quiet) {
+      quietCards.forEach(function (c, i) {
+        var why = c.check(p.quiet[i]);
+        if (why && !bad) bad = (quietCards.length > 1 ? "Discount " + (i + 1) + ": " : "") + why.replace(/^This is not lower/, "The price is not lower");
+      });
+      if (!bad) bad = quietOverlap(p.quiet) || null;
+    }
     if (bad) { showAlert(bad); return; }
     state.prices = p;
     showAlert("");
@@ -1671,21 +1726,19 @@
   function renderTeam() {
     var list = $("tm-list"), team = state.team || [];
     list.textContent = "";
-    team.forEach(function (t) { list.appendChild(el("li", {}, [el("span", { text: t.name + " (" + t.email + ")" }), el("b", { text: "Login created" })])); });
+    team.forEach(function (t) { list.appendChild(el("li", {}, [el("span", { text: t.email }), el("b", { text: "Login created" })])); });
     list.hidden = !team.length;
     $("tm-continue").textContent = team.length ? "Continue" : "Skip for now";
   }
   async function addOperator() {
-    var name = $("tm-name").value.trim(), email = $("tm-email").value.trim().toLowerCase();
-    var dob = $("tm-dob").value, pw = $("tm-pw").value, pw2 = $("tm-pw2").value;
-    if (!name) { showAlert("Enter their name"); $("tm-name").focus(); return; }
+    var email = $("tm-email").value.trim().toLowerCase();
+    var pw = $("tm-pw").value, pw2 = $("tm-pw2").value;
     if (!EMAIL.test(email)) { showAlert("Enter their email address, like name@example.com"); $("tm-email").focus(); return; }
-    if (!dob || ageOn(dob) < 18) { showAlert("They need to be 18 or over. Check their date of birth."); $("tm-dob").focus(); return; }
     if (pw.length < 8) { showAlert(COPY.weak_password); $("tm-pw").focus(); return; }
     if (pw !== pw2) { showAlert("The two passwords do not match"); $("tm-pw2").focus(); return; }
-    await fn("create-venue-operator", { venue_id: state.venue.id, full_name: name, email: email, password: pw, date_of_birth: dob });
-    state.team = (state.team || []).concat([{ name: name, email: email }]);
-    ["tm-name", "tm-email", "tm-dob", "tm-pw", "tm-pw2"].forEach(function (id) { $(id).value = ""; });
+    await fn("create-venue-operator", { venue_id: state.venue.id, email: email, password: pw });
+    state.team = (state.team || []).concat([{ email: email }]);
+    ["tm-email", "tm-pw", "tm-pw2"].forEach(function (id) { $(id).value = ""; });
     showAlert("Login created for " + email + ". When they first log in at wegogym.club/business, we email them a 6-digit code to confirm the address is theirs.");
     renderTeam();
   }

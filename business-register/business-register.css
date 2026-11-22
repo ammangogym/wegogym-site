@@ -178,3 +178,8 @@
 /* Time boxes (see /time-field.js): the part being typed into is highlighted in the brand yellow */
 .wgg-time { font-variant-numeric: tabular-nums; caret-color: transparent; }
 .wgg-time::selection { background: #ffd401; color: #111; }
+
+/* One quieter-times discount (day passes) */
+.br-qcard { margin: 12px 0; padding: 14px 14px 6px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); }
+.br-qtitle { margin: 0 0 8px; font-size: 1rem; }
+.br-qcard > .btn { margin: 0 0 8px; }
