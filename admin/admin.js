@@ -775,7 +775,7 @@
       ["Phone", a.phone],
       ["Based in", a.city],
       ["Website", a.website],
-      ["Instagram", a.instagram],
+      ["Instagram", a.instagram_handle ? "@" + a.instagram_handle : ""],
       ["Applied", fmtDateTime(a.created_at)],
       ["Privacy notice", a.privacy_version]
     ])]));
@@ -795,7 +795,8 @@
         ["Time", String(e.start_time).slice(0, 5) + (e.end_time ? " to " + String(e.end_time).slice(0, 5) : "")],
         ["Price", e.price_type === "ticketed" ? "£" + (e.price_pence / 100).toFixed(2) + " per ticket" : "Free (RSVP)"],
         ["Most people", e.capacity ? String(e.capacity) : ""],
-        ["Where they book now", e.existing_listing_url]
+        ["Where they book now", e.existing_listing_url],
+        ["Different on certain days", ptDayDetails(e.day_details)]
       ])]));
     });
     body.appendChild(section("Events (" + events.length + ")", evs));
@@ -821,8 +822,22 @@
   var PT_CONTACT_FIELDS = [
     ["organiser_name", "Name", "text", 120], ["organisation_name", "Group or business", "text", 120],
     ["email", "Email", "email", 254], ["phone", "Phone", "text", 40], ["city", "Town or city", "text", 80],
-    ["website", "Website", "text", 200], ["instagram", "Instagram", "text", 100]
+    ["website", "Website", "text", 200], ["instagram_handle", "Instagram", "text", 100]
   ];
+  // "Wednesday: 19:00 to 20:00, Park, £5.00" for each day that differs from the rest of the week
+  function ptDayDetails(list) {
+    if (!list || !list.length) return "";
+    var names = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    return list.map(function (d) {
+      var bits = [];
+      if (d.start_time) bits.push(String(d.start_time).slice(0, 5) + (d.end_time ? " to " + String(d.end_time).slice(0, 5) : ""));
+      else if (d.end_time) bits.push("ends " + String(d.end_time).slice(0, 5));
+      if (d.area) bits.push(d.area);
+      if (d.price_pence) bits.push("\u00a3" + (d.price_pence / 100).toFixed(2));
+      if (d.discount_percent) bits.push(d.discount_percent + "% off");
+      return (names[d.weekday] || "Day " + d.weekday) + ": " + bits.join(", ");
+    }).join("\n");
+  }
   function timeValue(t) { return t ? String(t).slice(0, 5) : ""; }
 
   function renderPartnershipEdit(a) {

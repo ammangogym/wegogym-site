@@ -127,3 +127,20 @@ events form; hidden business fields (e.g. "Tell us what kind of place it is") sh
    `partnerships.css` / `partnerships.js` (done on the branch: `20261121c` / `20261121e`) and `admin.css` / `admin.js` (`20261121a`).
 4. Run the ad-blocker check and the click-through tests against the real pages, merge `signup-v2` into
    `main`, push, check the live pages.
+
+## Went live 2026-11-22
+
+Backend applied to the production database (migration `signup_v2_backend`) and two edge functions redeployed
+(`partnerships` v5, `create-venue-operator` v2). Done: business prices, classes (with class name) and
+discounts are saved from the Prices step; Instagram handle and per-day event details are stored; admin
+edit functions `admin_update_venue` and `admin_update_partnership` exist; front-desk logins need only an
+email and password (`app_metadata.front_desk_login`, service-role only, lets `handle_new_user` skip the date
+of birth rule). Not done:
+- Quieter-times discounts on day passes are saved as `scheduled` (not applied): the price calculator only
+  matches time windows on timetable classes, never on day passes.
+- A class discount applies to any class in the same day and time window (promotions carry no class link).
+- Unlimited spaces is stored as 10000. Standing discounts run 12 months from the day they are saved.
+- Booking emails to front-desk addresses: the `notify-venue-booking` function is not deployed on production.
+  The local change (WGG2 `functions/notify-venue-booking/handler.ts`) is ready for when it is.
+- WGG2 repo: `0074_front_desk_login_no_dob.sql` and the `create-venue-operator` and `venue-operators.test.ts`
+  edits are local and uncommitted; production has the same logic under migration name `signup_v2_backend`.

@@ -1717,9 +1717,63 @@
       if (!bad) bad = quietOverlap(p.quiet) || null;
     }
     if (bad) { showAlert(bad); return; }
+    await persistPrices(p);
     state.prices = p;
     showAlert("");
     showStep("team");
+  }
+
+  // Writes the prices, classes and discounts to the database as the signed-in owner (the
+  // database's own rules decide that only this venue's owner can do it). It clears what an
+  // earlier save wrote and writes it again, so saving twice never doubles anything.
+  var UNLIMITED_SPACES = 10000; // slot_templates.capacity must be above zero: this is "no limit" in practice
+  var DISCOUNT_MONTHS = 12;     // how long a standing discount lasts from the day it is saved
+  function isoDay(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function dbDay(n) { return n % 7; } // the form numbers Monday 1 to Sunday 7, the database Sunday 0 to Saturday 6
+  async function persistPrices(p) {
+    var id = state.venue.id, vq = "venue_id=eq." + id, now = new Date(), end = new Date(now);
+    end.setMonth(end.getMonth() + DISCOUNT_MONTHS);
+    var starts = isoDay(now), ends = isoDay(end), promos = [];
+    // Clear the old copies first
+    await http("/rest/v1/promotions?" + vq + "&code=is.null", { method: "DELETE" });
+    if (p.mode === "day_pass") {
+      await http("/rest/v1/slot_templates?" + vq, { method: "DELETE" });
+      await http("/rest/v1/day_pass_prices?" + vq, { method: "DELETE" });
+      var longest = p.passes.reduce(function (m, x) { return Math.max(m, x.days); }, 1);
+      await http("/rest/v1/venues?id=eq." + id, { method: "PATCH", json: { booking_mode: "day_pass", max_pass_days: longest } });
+      await http("/rest/v1/day_pass_prices", { method: "POST", json: p.passes.map(function (x) {
+        return { venue_id: id, days: x.days, price_pence: x.price };
+      }) });
+      // The booking system can only apply a discount to a whole day pass by day of week, not
+      // by time of day, so these are kept on file as "scheduled" (not applied) until it can.
+      var one = p.passes[0].price;
+      (p.quiet || []).forEach(function (q, i) {
+        var off = q.percent ? { discount_type: "percent", discount_value: q.percent }
+          : { discount_type: "fixed", discount_value: one - q.price };
+        promos.push(Object.assign({ venue_id: id, name: "Quieter times " + (i + 1), starts_on: starts, ends_on: ends,
+          days_of_week: q.days.map(dbDay), slot_time_start: q.from, slot_time_end: q.to, status: "scheduled" }, off));
+      });
+    } else {
+      await http("/rest/v1/day_pass_prices?" + vq, { method: "DELETE" });
+      await http("/rest/v1/slot_templates?" + vq, { method: "DELETE" });
+      await http("/rest/v1/venues?id=eq." + id, { method: "PATCH", json: { booking_mode: "time_slot" } });
+      var rows = [];
+      p.classes.forEach(function (c) {
+        c.days.forEach(function (d) {
+          rows.push({ venue_id: id, name: c.name, day_of_week: dbDay(d), start_time: c.start, end_time: c.end,
+            capacity: c.spaces || UNLIMITED_SPACES, price_pence: c.price, active: true });
+        });
+        if (c.discount && (c.discount.percent || c.discount.price)) {
+          var o = c.discount.percent ? { discount_type: "percent", discount_value: c.discount.percent }
+            : { discount_type: "fixed", discount_value: c.price - c.discount.price };
+          promos.push(Object.assign({ venue_id: id, name: "Off-peak " + c.name, starts_on: starts, ends_on: ends,
+            days_of_week: c.days.map(dbDay), slot_time_start: c.start, slot_time_end: c.end, status: "active" }, o));
+        }
+      });
+      await http("/rest/v1/slot_templates", { method: "POST", json: rows });
+    }
+    if (promos.length) await http("/rest/v1/promotions", { method: "POST", json: promos });
+    state.venue.booking_mode = p.mode === "day_pass" ? "day_pass" : "time_slot";
   }
 
   // ===== Front-desk logins (view-only operators) =====
