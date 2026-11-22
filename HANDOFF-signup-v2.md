@@ -144,3 +144,31 @@ of birth rule). Not done:
   The local change (WGG2 `functions/notify-venue-booking/handler.ts`) is ready for when it is.
 - WGG2 repo: `0074_front_desk_login_no_dob.sql` and the `create-venue-operator` and `venue-operators.test.ts`
   edits are local and uncommitted; production has the same logic under migration name `signup_v2_backend`.
+
+## Fixes on 2026-11-22 (afternoon, live)
+
+Production migration `signup_v2_fixes`, `create-venue-operator` v3, site `business-register.js?v=8`
+(`.css?v=4`), `business/business.js?v=2` (`.css?v=2`).
+- **Prices save in one call:** `save_venue_prices(p_venue_id, p_prices jsonb)` (runs as the owner; any problem
+  undoes the whole save). Refuses repeated pass lengths, a missing 1-day price, and replacing prices once the
+  venue has bookings. The page also refuses repeated pass lengths before sending.
+- **Daily capacity:** day-pass venues must give "Most people who can come in one day" (1 to 10,000), saved to
+  `venues.day_capacity`.
+- **Class discounts belong to their class:** `promotions.slot_template_ids`; `calc_price` only applies such a
+  promotion to those classes.
+- **Quieter-times discounts work as off-peak passes:** active promotions with hours. `calc_price`,
+  `preview_price` and `create_booking` take `p_off_peak boolean default false`; with it, a 1-day pass gets the
+  discount and the booking stores `valid_from_time` / `valid_until_time`. `preview_price` returns those hours.
+  `check_in_booking` refuses the pass outside them (`outside_hours`, WGG35). Without `p_off_peak` the member pays
+  full price for a full day. Error `off_peak_unavailable` (WGG17) when there is no off-peak pass that day.
+  **The member app (WGG2) still needs an "off-peak pass" choice that sends `p_off_peak: true` and shows the hours.**
+- **Front-desk logins:** no name or date of birth anywhere (dashboard form too). `venue_members.booking_alerts`;
+  owner-only `list_front_desk_logins` and `set_front_desk_alerts`; `create-venue-operator` takes `booking_alerts`.
+  Switches on the sign-up Front-desk step and the dashboard team list.
+  `app.venue_booking_alert_recipients(venue_id)` (service role only) lists who to email: owners and staff with
+  `profiles.notify_bookings`, and front-desk logins with alerts on.
+  **The booking-alert email sender (`notify-venue-booking`) is still not deployed on production**: it must read
+  its recipients from `app.venue_booking_alert_recipients`.
+- **WGG2 repo is behind production:** copy `signup_v2_fixes` into `supabase/migrations`, and the
+  `booking_alerts` line into `functions/create-venue-operator/handler.ts`, before the next deploy from WGG2,
+  or that deploy will undo them.

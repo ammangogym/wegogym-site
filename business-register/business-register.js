@@ -31,7 +31,7 @@
   };
 
   var SESSION_KEY = "wgg-business-session";
-  var VENUE_COLS = "id,name,slug,status,country,timezone,description,category_slug,legal_name," +
+  var VENUE_COLS = "id,name,slug,status,country,timezone,description,category_slug,legal_name,day_capacity," +
     "company_number,contact_name,contact_email,contact_phone,address_line1,address_line2," +
     "city,region,postcode,opening_hours,amenities,category_other,google_maps_url,apple_maps_url";
   var PHOTO_MAX_BYTES = 5 * 1024 * 1024; // the bucket's own limit (migration 0011)
@@ -1429,8 +1429,7 @@
   }
 
   // ===== Prices (after payouts) =====
-  // NOT SAVED YET: this step is shown for review. Saving to day_pass_prices, slot_templates and
-  // promotions is wired once the layout is approved.
+  // Saved by persistPrices below in one all-or-nothing call.
   var WEEK = [[1, "Mon", "Monday"], [2, "Tue", "Tuesday"], [3, "Wed", "Wednesday"], [4, "Thu", "Thursday"],
     [5, "Fri", "Friday"], [6, "Sat", "Saturday"], [7, "Sun", "Sunday"]];
   var pricesReady = false;
@@ -1540,7 +1539,7 @@
       : !c.start || !c.end || c.end <= c.start ? "Choose a start time and an end time after it"
       : !$("pr-ed-spaces").value ? "Choose how many spaces there are"
       : c.price === null ? "Type a price between £1.00 and £1,000.00, for example 15"
-      : c.discount && !(c.discount.percent || (c.discount.price && c.discount.price < c.price)) ? "Type a discount between 1 and 99%, or a discounted price lower than " + pounds(c.price) + "."
+      : c.discount && !(c.discount.percent || (c.discount.price && c.discount.price < c.price)) ? "Type a discount between 1 and 99%, or a discounted price lower than " + pounds(c.price)
       : null;
     if (bad) { $("pr-ed-err").textContent = bad; $("pr-ed-err").hidden = false; return; }
     if (editingId) { c.id = editingId; classes = classes.map(function (x) { return x.id === editingId ? c : x; }); }
@@ -1686,6 +1685,7 @@
         $("pr-day").hidden = !day; $("pr-slot").hidden = day; $("pr-quiet-box").hidden = !day; quietExample(); });
     });
     $("pr-multi-add").addEventListener("click", addMulti);
+    if (state.venue && state.venue.day_capacity) $("pr-cap").value = String(state.venue.day_capacity);
     addQuiet(true);
     $("pr-quiet").addEventListener("change", function () { $("pr-quiet-more").hidden = !$("pr-quiet").checked; quietExample(); });
     $("pr-quiet-add").addEventListener("click", function () { var c = addQuiet(false); c.boxes[0].focus(); });
@@ -1695,6 +1695,7 @@
   function readPrices() {
     var out = { mode: mode(), quiet: null };
     if (out.mode === "day_pass") {
+      out.dayCapacity = /^\s*\d{1,5}\s*$/.test($("pr-cap").value) ? parseInt($("pr-cap").value, 10) : null;
       out.passes = [{ days: 1, price: penceFrom($("pr-day1").value) }].concat(
         Array.prototype.map.call($("pr-multi").children, function (r) { return { days: Number(r._f.days.value), price: penceFrom(r._f.price.value) }; }));
     } else {
@@ -1708,6 +1709,11 @@
   async function savePrices() {
     var p = readPrices(), bad = null;
     if (p.mode === "day_pass" && p.passes.some(function (x) { return x.price === null; })) bad = "Enter each price between £1.00 and £1,000.00, for example 12.50";
+    if (p.mode === "day_pass" && !bad && p.passes.some(function (x, i) { return p.passes.some(function (y, j) { return j < i && y.days === x.days; }); }))
+      bad = "Two of your passes are the same length. Change one or remove it.";
+    if (p.mode === "day_pass" && !bad && !(p.dayCapacity >= 1 && p.dayCapacity <= 10000)) {
+      bad = "Enter the most people who can come in one day, between 1 and 10,000"; $("pr-cap").focus();
+    }
     if (p.mode === "time_slot" && !p.classes.length) bad = "Add at least one class to the calendar";
     if (p.quiet) {
       quietCards.forEach(function (c, i) {
@@ -1723,66 +1729,60 @@
     showStep("team");
   }
 
-  // Writes the prices, classes and discounts to the database as the signed-in owner (the
-  // database's own rules decide that only this venue's owner can do it). It clears what an
-  // earlier save wrote and writes it again, so saving twice never doubles anything.
-  var UNLIMITED_SPACES = 10000; // slot_templates.capacity must be above zero: this is "no limit" in practice
-  var DISCOUNT_MONTHS = 12;     // how long a standing discount lasts from the day it is saved
-  function isoDay(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
-  function dbDay(n) { return n % 7; } // the form numbers Monday 1 to Sunday 7, the database Sunday 0 to Saturday 6
+  // Saves the prices, classes and discounts in one call that either saves everything or
+  // nothing (save_venue_prices, migration signup_v2_fixes). The database checks that only this
+  // venue's owner or staff can do it, and saving twice replaces the first save.
   async function persistPrices(p) {
-    var id = state.venue.id, vq = "venue_id=eq." + id, now = new Date(), end = new Date(now);
-    end.setMonth(end.getMonth() + DISCOUNT_MONTHS);
-    var starts = isoDay(now), ends = isoDay(end), promos = [];
-    // Clear the old copies first
-    await http("/rest/v1/promotions?" + vq + "&code=is.null", { method: "DELETE" });
+    var body = { mode: p.mode };
     if (p.mode === "day_pass") {
-      await http("/rest/v1/slot_templates?" + vq, { method: "DELETE" });
-      await http("/rest/v1/day_pass_prices?" + vq, { method: "DELETE" });
-      var longest = p.passes.reduce(function (m, x) { return Math.max(m, x.days); }, 1);
-      await http("/rest/v1/venues?id=eq." + id, { method: "PATCH", json: { booking_mode: "day_pass", max_pass_days: longest } });
-      await http("/rest/v1/day_pass_prices", { method: "POST", json: p.passes.map(function (x) {
-        return { venue_id: id, days: x.days, price_pence: x.price };
-      }) });
-      // The booking system can only apply a discount to a whole day pass by day of week, not
-      // by time of day, so these are kept on file as "scheduled" (not applied) until it can.
-      var one = p.passes[0].price;
-      (p.quiet || []).forEach(function (q, i) {
-        var off = q.percent ? { discount_type: "percent", discount_value: q.percent }
-          : { discount_type: "fixed", discount_value: one - q.price };
-        promos.push(Object.assign({ venue_id: id, name: "Quieter times " + (i + 1), starts_on: starts, ends_on: ends,
-          days_of_week: q.days.map(dbDay), slot_time_start: q.from, slot_time_end: q.to, status: "scheduled" }, off));
+      body.day_capacity = p.dayCapacity;
+      body.passes = p.passes.map(function (x) { return { days: x.days, price: x.price }; });
+      body.quiet = (p.quiet || []).map(function (q) {
+        return { percent: q.percent || null, price: q.percent ? null : q.price, days: q.days, from: q.from, to: q.to };
       });
     } else {
-      await http("/rest/v1/day_pass_prices?" + vq, { method: "DELETE" });
-      await http("/rest/v1/slot_templates?" + vq, { method: "DELETE" });
-      await http("/rest/v1/venues?id=eq." + id, { method: "PATCH", json: { booking_mode: "time_slot" } });
-      var rows = [];
-      p.classes.forEach(function (c) {
-        c.days.forEach(function (d) {
-          rows.push({ venue_id: id, name: c.name, day_of_week: dbDay(d), start_time: c.start, end_time: c.end,
-            capacity: c.spaces || UNLIMITED_SPACES, price_pence: c.price, active: true });
-        });
-        if (c.discount && (c.discount.percent || c.discount.price)) {
-          var o = c.discount.percent ? { discount_type: "percent", discount_value: c.discount.percent }
-            : { discount_type: "fixed", discount_value: c.price - c.discount.price };
-          promos.push(Object.assign({ venue_id: id, name: "Off-peak " + c.name, starts_on: starts, ends_on: ends,
-            days_of_week: c.days.map(dbDay), slot_time_start: c.start, slot_time_end: c.end, status: "active" }, o));
-        }
+      body.classes = p.classes.map(function (c) {
+        return { name: c.name, days: c.days, start: c.start, end: c.end, spaces: c.spaces, price: c.price,
+          discount: c.discount ? (c.discount.percent ? { percent: c.discount.percent } : { price: c.discount.price }) : null };
       });
-      await http("/rest/v1/slot_templates", { method: "POST", json: rows });
     }
-    if (promos.length) await http("/rest/v1/promotions", { method: "POST", json: promos });
-    state.venue.booking_mode = p.mode === "day_pass" ? "day_pass" : "time_slot";
+    await http("/rest/v1/rpc/save_venue_prices", { method: "POST", json: { p_venue_id: state.venue.id, p_prices: body } });
+    state.venue.booking_mode = p.mode;
   }
 
   // ===== Front-desk logins (view-only operators) =====
-  function renderTeam() {
-    var list = $("tm-list"), team = state.team || [];
+  // The owner's front-desk logins, read back from the database so a reload still shows them,
+  // each with its own switch for booking alert emails.
+  async function renderTeam() {
+    var list = $("tm-list");
+    try {
+      state.team = await http("/rest/v1/rpc/list_front_desk_logins", { method: "POST", json: { p_venue_id: state.venue.id } }) || [];
+    } catch (err) {
+      if (err.code === "session") { handleError(err); return; }
+      state.team = state.team || [];
+    }
     list.textContent = "";
-    team.forEach(function (t) { list.appendChild(el("li", {}, [el("span", { text: t.email }), el("b", { text: "Login created" })])); });
-    list.hidden = !team.length;
-    $("tm-continue").textContent = team.length ? "Continue" : "Skip for now";
+    state.team.forEach(function (t) {
+      var id = "tm-a" + (++fieldSeq), box = el("input", { type: "checkbox", id: id });
+      box.checked = !!t.booking_alerts;
+      box.disabled = !t.profile_id;
+      box.addEventListener("change", async function () {
+        box.disabled = true;
+        try {
+          await http("/rest/v1/rpc/set_front_desk_alerts", { method: "POST",
+            json: { p_venue_id: state.venue.id, p_profile_id: t.profile_id, p_enabled: box.checked } });
+          t.booking_alerts = box.checked;
+          announce((box.checked ? "Booking emails on for " : "Booking emails off for ") + t.email);
+        } catch (err) {
+          box.checked = !box.checked;
+          handleError(err);
+        } finally { box.disabled = false; }
+      });
+      list.appendChild(el("li", {}, [el("span", { text: t.email }),
+        el("label", { for: id }, [box, el("span", { text: "Booking emails" })])]));
+    });
+    list.hidden = !state.team.length;
+    $("tm-continue").textContent = state.team.length ? "Continue" : "Skip for now";
   }
   async function addOperator() {
     var email = $("tm-email").value.trim().toLowerCase();
@@ -1790,11 +1790,10 @@
     if (!EMAIL.test(email)) { showAlert("Enter their email address, like name@example.com"); $("tm-email").focus(); return; }
     if (pw.length < 8) { showAlert(COPY.weak_password); $("tm-pw").focus(); return; }
     if (pw !== pw2) { showAlert("The two passwords do not match"); $("tm-pw2").focus(); return; }
-    await fn("create-venue-operator", { venue_id: state.venue.id, email: email, password: pw });
-    state.team = (state.team || []).concat([{ email: email }]);
+    await fn("create-venue-operator", { venue_id: state.venue.id, email: email, password: pw, booking_alerts: $("tm-alerts").checked });
     ["tm-email", "tm-pw", "tm-pw2"].forEach(function (id) { $(id).value = ""; });
     showAlert("Login created for " + email + ". When they first log in at wegogym.club/business, we email them a 6-digit code to confirm the address is theirs.");
-    renderTeam();
+    await renderTeam();
   }
 
   // ===== Waiting for approval =====

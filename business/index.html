@@ -29,8 +29,8 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/waitlist/waitlist.css">
   <link rel="stylesheet" href="/business-register/business-register.css">
-  <link rel="stylesheet" href="/business/business.css?v=1">
-  <script src="/business/business.js?v=1" defer></script>
+  <link rel="stylesheet" href="/business/business.css?v=2">
+  <script src="/business/business.js?v=2" defer></script>
 </head>
 <body class="page-waitlist page-br">
   <header class="site-header">
@@ -126,18 +126,9 @@
         <h4>Create an operator login</h4>
         <form id="op-form" novalidate>
           <div class="br-field">
-            <label for="op-name">Their full name</label>
-            <input type="text" id="op-name" maxlength="120" autocomplete="off" required>
-          </div>
-          <div class="br-field">
             <label for="op-email">Their email address</label>
             <input type="email" id="op-email" maxlength="254" autocomplete="off" inputmode="email" required aria-describedby="op-email-hint">
             <p class="wl-hint" id="op-email-hint">This is what they log in with. It cannot already have a WeGoGym account.</p>
-          </div>
-          <div class="br-field">
-            <label for="op-dob">Their date of birth</label>
-            <input type="date" id="op-dob" required aria-describedby="op-dob-hint">
-            <p class="wl-hint" id="op-dob-hint">They need to be 18 or over.</p>
           </div>
           <div class="br-field">
             <label for="op-password">Choose a password for them</label>
@@ -147,6 +138,9 @@
           <div class="br-field">
             <label for="op-password2">Confirm the password</label>
             <input type="password" id="op-password2" autocomplete="new-password" maxlength="72" required>
+          </div>
+          <div class="chips bd-alerts-chip">
+            <label class="chip" for="op-alerts"><input type="checkbox" id="op-alerts" checked><span>Email this login when someone books</span></label>
           </div>
           <div class="wl-actions">
             <button type="submit" class="btn btn-primary">Create login</button>

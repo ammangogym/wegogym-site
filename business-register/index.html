@@ -28,9 +28,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/waitlist/waitlist.css">
-  <link rel="stylesheet" href="/business-register/business-register.css?v=3">
+  <link rel="stylesheet" href="/business-register/business-register.css?v=4">
   <script src="/time-field.js?v=1" defer></script>
-  <script src="/business-register/business-register.js?v=7" defer></script>
+  <script src="/business-register/business-register.js?v=8" defer></script>
 </head>
 <body class="page-waitlist page-br">
 
@@ -310,6 +310,11 @@
           <label for="pr-day1">Price for one day</label>
           <div class="br-money"><span aria-hidden="true">&pound;</span><input type="text" id="pr-day1" inputmode="decimal" autocomplete="off" maxlength="9"></div>
         </div>
+        <div class="br-field">
+          <label for="pr-cap">Most people who can come in one day</label>
+          <input type="text" id="pr-cap" inputmode="numeric" autocomplete="off" maxlength="5" aria-describedby="pr-cap-hint">
+          <p class="wl-hint" id="pr-cap-hint">We stop selling day passes for a day once this many are booked</p>
+        </div>
         <div id="pr-multi"></div>
         <button type="button" class="btn btn-secondary br-small" id="pr-multi-add">Add a multi-day pass</button>
       </div>
@@ -369,6 +374,7 @@
           <label class="chip" for="pr-quiet"><input type="checkbox" id="pr-quiet"><span>Add a quieter-times discount</span></label>
         </div>
         <div id="pr-quiet-more" hidden>
+          <p class="wl-hint">Members choose the discounted pass when they book. It only lets them in between the times you set, and their pass is not valid outside them.</p>
           <p class="wl-hint">Quiet times can differ from day to day. Add a separate discount for each set of days and times.</p>
           <div id="pr-quiet-list"></div>
           <button type="button" class="btn btn-secondary br-small" id="pr-quiet-add">Add a discount for other days or times</button>
@@ -400,6 +406,9 @@
       <div class="br-field">
         <label for="tm-pw2">Type the password again</label>
         <input type="password" id="tm-pw2" autocomplete="new-password" maxlength="72">
+      </div>
+      <div class="chips">
+        <label class="chip" for="tm-alerts"><input type="checkbox" id="tm-alerts" checked><span>Email this login when someone books</span></label>
       </div>
       <button type="button" class="btn btn-secondary br-small" id="tm-add">Add this login</button>
       <div class="wl-actions">

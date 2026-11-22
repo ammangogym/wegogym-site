@@ -374,6 +374,10 @@
     var list = $("bd-people");
     list.textContent = "";
     var rows = await http("/rest/v1/rpc/list_venue_staff", { method: "POST", json: { p_venue_id: state.venue.id } });
+    // Which operator logins get booking emails (owner only, migration signup_v2_fixes)
+    var alerts = {};
+    (await http("/rest/v1/rpc/list_front_desk_logins", { method: "POST", json: { p_venue_id: state.venue.id } }) || [])
+      .forEach(function (f) { alerts[f.profile_id] = f.booking_alerts; });
     var me = state.session.user.id;
     rows.forEach(function (r) {
       var li = document.createElement("li");
@@ -382,6 +386,7 @@
       var meta = document.createElement("span");
       meta.textContent = " " + (r.email || "") + " · " + (r.member_role === "operator" ? "Operator (view only)" : r.member_role === "owner" ? "Owner" : "Staff");
       who.appendChild(name); who.appendChild(meta); li.appendChild(who);
+      if (r.member_role === "operator") li.appendChild(alertSwitch(r, !!alerts[r.profile_id]));
       if (r.member_role !== "owner" && r.profile_id !== me) {
         var b = document.createElement("button");
         b.type = "button"; b.className = "btn btn-ghost br-small";
@@ -399,23 +404,34 @@
     });
   }
 
-  function ageOn(iso) {
-    var dob = new Date(iso + "T00:00:00"), now = new Date();
-    var age = now.getFullYear() - dob.getFullYear(), m = now.getMonth() - dob.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
-    return age;
+  // "Booking emails" switch for one operator login
+  function alertSwitch(r, on) {
+    var label = document.createElement("label"), box = document.createElement("input"), text = document.createElement("span");
+    box.type = "checkbox"; box.checked = on; box.id = "al-" + r.profile_id;
+    label.className = "bd-alert"; label.htmlFor = box.id;
+    text.textContent = "Booking emails";
+    box.addEventListener("change", async function () {
+      box.disabled = true;
+      try {
+        await http("/rest/v1/rpc/set_front_desk_alerts", { method: "POST",
+          json: { p_venue_id: state.venue.id, p_profile_id: r.profile_id, p_enabled: box.checked } });
+        announce((box.checked ? "Booking emails on for " : "Booking emails off for ") + (r.email || "this login"));
+      } catch (err) {
+        box.checked = !box.checked;
+        handleError(err);
+      } finally { box.disabled = false; }
+    });
+    label.appendChild(box); label.appendChild(text);
+    return label;
   }
 
   async function createOperator() {
-    var name = $("op-name").value.trim(), email = $("op-email").value.trim(), dob = $("op-dob").value;
+    var email = $("op-email").value.trim();
     var pw = $("op-password").value, pw2 = $("op-password2").value;
-    if (!name) { showAlert(COPY.invalid_name); $("op-name").focus(); return; }
     if (!EMAIL.test(email)) { showAlert(COPY.invalid_email); $("op-email").focus(); return; }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) { showAlert("Enter their date of birth."); $("op-dob").focus(); return; }
-    if (ageOn(dob) < 18) { showAlert(COPY.under_18); $("op-dob").focus(); return; }
     if (pw.length < 8) { showAlert(COPY.weak_password); $("op-password").focus(); return; }
     if (pw !== pw2) { showAlert("The two passwords do not match."); $("op-password2").focus(); return; }
-    await fn("create-venue-operator", { venue_id: state.venue.id, full_name: name, email: email, password: pw, date_of_birth: dob });
+    await fn("create-venue-operator", { venue_id: state.venue.id, email: email, password: pw, booking_alerts: $("op-alerts").checked });
     $("op-form").reset();
     announce("Login created.");
     showAlert("Login created for " + email + ". When they first log in at wegogym.club/business with the password you chose, we email them a 6-digit code to confirm the address is theirs.");
